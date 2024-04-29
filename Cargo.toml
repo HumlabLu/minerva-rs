@@ -9,5 +9,5 @@ edition = "2021"
 anyhow = "1.0.82"
 fastembed = "3.5.0"
 serde = { version = "1.0.199", features = ["derive"] }
-surrealdb = { version = "1.4.2", features = ["kv-rocksdb"] }
+surrealdb = { version = "1.4.2", features = ["kv-rocksdb", "kv-mem"] }
 tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
