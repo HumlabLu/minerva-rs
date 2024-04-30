@@ -1,7 +1,7 @@
 use fastembed::{TextEmbedding, InitOptions, EmbeddingModel};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-
+use oasysdb::prelude::*;
 
 fn main() -> anyhow::Result<()> {
     // With default InitOptions
@@ -33,6 +33,54 @@ fn main() -> anyhow::Result<()> {
 
     // ----
 
+    // Vector dimension must be uniform.
+    let dimension = 384;
+
+    // Replace with your own data.
+    //let records = Record::many_random(dimension, 100);
+
+    let mut config = Config::default();
+
+    // Optionally set the distance function. Default to Euclidean.
+    //config.distance = Distance::Cosine;
+
+    // Create a vector collection.
+    //let collection = Collection::build(&config, &records).unwrap();
+    
+    let mut db = Database::new("data/test").unwrap();
+
+    let data = vec!["This is an example.", "Hello world!"];
+    let vectors = model.embed(data.clone(), None).expect("Cannot create embeddings.");
+    let mut records = vec![];
+    for (chunk, vector) in data.iter().zip(vectors.iter()) {
+        let v = Vector((&vector).to_vec());
+        let m = Metadata::Text((&chunk).to_string());
+        let record = Record::new(&v, &m);
+        println!("{:?}", m);
+        records.push(record);
+    }
+    let collection = Collection::build(&config, &records).unwrap();
+    db.save_collection("vectors", &collection).unwrap();
+
+    // Extracting the metadata value.
+    /*
+    let metadata = record.data.clone();
+    let data = match metadata {
+        Metadata::Text(value) => value,
+        _ => panic!("Data is not a text."),
+    };
+
+    println!("{}", data);
+     */
+
+    // Search for the nearest neighbors.
+    let query = Vector::random(dimension);
+    let result = collection.search(&query, 5).unwrap();
+
+    for res in result {
+        let (id, distance) = (res.id, res.distance);
+        println!("{distance:.5} | ID: {id}");
+    }
     
     Ok(())
 }
