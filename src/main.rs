@@ -49,7 +49,7 @@ fn main() -> anyhow::Result<()> {
     
     let mut db = Database::new("data/test").unwrap();
 
-    let data = vec!["This is an example.", "Hello world!"];
+    let data = vec!["This is an example.", "Hello world!", "Another example"];
     let vectors = model.embed(data.clone(), None).expect("Cannot create embeddings.");
     let mut records = vec![];
     for (chunk, vector) in data.iter().zip(vectors.iter()) {
@@ -74,7 +74,10 @@ fn main() -> anyhow::Result<()> {
      */
 
     // Search for the nearest neighbors.
-    let query = Vector::random(dimension);
+    let data = vec!["This is another example"];
+    let vectors = model.embed(data, None).expect("Cannot create embeddings.");
+    let v = vectors.get(0).expect("uh");
+    let query = Vector((&v).to_vec());
     let result = collection.search(&query, 5).unwrap();
 
     for res in result {
