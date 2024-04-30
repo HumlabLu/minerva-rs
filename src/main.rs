@@ -47,7 +47,7 @@ fn main() -> anyhow::Result<()> {
     // Create a vector collection.
     //let collection = Collection::build(&config, &records).unwrap();
     
-    let mut db = Database::new("data/test").unwrap();
+    let mut db = Database::open("data/test").unwrap();
 
     let data = vec!["This is an example.", "Hello world!", "Another example"];
     let vectors = model.embed(data.clone(), None).expect("Cannot create embeddings.");
@@ -56,33 +56,29 @@ fn main() -> anyhow::Result<()> {
         let v = Vector((&vector).to_vec());
         let m = Metadata::Text((&chunk).to_string());
         let record = Record::new(&v, &m);
-        println!("{:?}", m);
+        println!("Record {:?}", m);
         records.push(record);
     }
-    let collection = Collection::build(&config, &records).unwrap();
-    db.save_collection("vectors", &collection).unwrap();
 
-    // Extracting the metadata value.
-    /*
-    let metadata = record.data.clone();
-    let data = match metadata {
-        Metadata::Text(value) => value,
-        _ => panic!("Data is not a text."),
-    };
-
-    println!("{}", data);
-     */
-
+    //let collection = Collection::build(&config, &records).unwrap();
+    //db.save_collection("vectors", &collection).unwrap();
+    let collection = db.get_collection("vectors").unwrap();
+    
     // Search for the nearest neighbors.
     let data = vec!["This is another example"];
     let vectors = model.embed(data, None).expect("Cannot create embeddings.");
     let v = vectors.get(0).expect("uh");
     let query = Vector((&v).to_vec());
-    let result = collection.search(&query, 5).unwrap();
+    let result = collection.search(&query, 2).unwrap();
 
     for res in result {
+        //println!("{:?}", res);
+        let md = match res.data {
+            Metadata::Text(value) => value,
+            _ => panic!("Data is not a text."),
+        };
         let (id, distance) = (res.id, res.distance);
-        println!("{distance:.5} | ID: {id}");
+        println!("{distance:.5} | ID: {id} {md}");
     }
     
     Ok(())
