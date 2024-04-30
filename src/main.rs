@@ -3,7 +3,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use oasysdb::prelude::*;
 use clap::Parser;
-
+use std::collections::HashMap;
 mod database;
 use database::{get_db};
 
@@ -90,15 +90,20 @@ fn main() -> anyhow::Result<()> {
     let mut records = vec![];
     for (chunk, vector) in data.iter().zip(vectors.iter()) {
         let v = Vector((&vector).to_vec());
-        let m = Metadata::Text((&chunk).to_string());
-        let record = Record::new(&v, &m);
-        println!("Record {:?}", m);
+        let m0 = Metadata::Text((&chunk).to_string());
+        let m1 = Metadata::Float(28.);
+        let hm = HashMap::from([("key", "value")]);
+        //let ma = Metadata::Array(vec![m0, m1, hm.into()]);
+        let record = Record::new(&v, &m0);
+        println!("Record {:?}", m0);
         records.push(record);
     }
 
     let collection = Collection::build(&config, &records).unwrap();
     db.save_collection(&args.collection, &collection).unwrap();
     //let collection = db.get_collection(&args.collection).unwrap();
+
+    //let ids = collection.insert_many(&new_records).unwrap();
     
     // Search for the nearest neighbors.
     if let Some(query) = &args.query {
@@ -113,7 +118,7 @@ fn main() -> anyhow::Result<()> {
             //println!("{:?}", res);
             let md = match res.data {
                 Metadata::Text(value) => value,
-                _ => panic!("Data is not a text."),
+                _ => "Data is not a text.".to_string()
             };
             let (id, distance) = (res.id, res.distance);
             println!("{distance:.5} | ID: {id} {md}");
