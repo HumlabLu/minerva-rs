@@ -1,22 +1,13 @@
 use fastembed::{TextEmbedding, InitOptions, EmbeddingModel};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use surrealdb::engine::local::Mem;
-use surrealdb::sql::Thing;
-use surrealdb::Surreal;
-use surrealdb::engine::local::Db;
-use surrealdb::engine::local::RocksDb;
 
-use once_cell::sync::Lazy;
 
-static DB: Lazy<Surreal<Db>> = Lazy::new(Surreal::init);
-
-#[tokio::main]
-async fn main() -> surrealdb::Result<()> {
+fn main() -> anyhow::Result<()> {
     // With default InitOptions
     //let model = TextEmbedding::try_new(Default::default()).expect("Cannot initialise model.");
 
-    dbg!(TextEmbedding::list_supported_models());
+    //dbg!(TextEmbedding::list_supported_models());
     
     // With custom InitOptions
     let model = TextEmbedding::try_new(InitOptions {
@@ -42,9 +33,8 @@ async fn main() -> surrealdb::Result<()> {
 
     // ----
 
-    let db = Surreal::new::<RocksDb>("here").await?;
-    db.use_ns("minerva").use_db("content").await?;
-    println!("{:?}", db);
     
     Ok(())
 }
+
+// FEST 7e maj!
