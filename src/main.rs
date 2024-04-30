@@ -2,11 +2,50 @@ use fastembed::{TextEmbedding, InitOptions, EmbeddingModel};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use oasysdb::prelude::*;
+use clap::Parser;
+
+mod database;
+use database::{get_db};
+
+// =====================================================================
+// Command line arguments.
+// =====================================================================
+
+#[derive(Parser, Debug, Clone)]
+struct Args {
+    // Filename
+    #[arg(short, long, help = "The file... but what is it?")]
+    pub filename: Option<String>, // Path thingy?
+
+    // Chunk size
+    #[clap(long, action, default_value_t = 250, help = "Chunk size in characters.")]
+    pub chunksize: usize,
+
+    // Name of the database (collection)
+    #[arg(long, default_value = "vectors", help = "Name of the database collection.")]
+    pub collection: String,
+
+    // Query
+    #[arg(short, long, help = "Question?")]
+    pub query: Option<String>,
+
+    // Extra output
+    #[arg(long, short, action, help = "Produce superfluous output.")]
+    pub verbose: bool,
+}
+
+// =====================================================================
+// Main.
+// =====================================================================
 
 fn main() -> anyhow::Result<()> {
+
+    let args = Args::parse();
+    dbg!("{:?}", &args);
+    //let filename = &args.filename;
+    
     // With default InitOptions
     //let model = TextEmbedding::try_new(Default::default()).expect("Cannot initialise model.");
-
     //dbg!(TextEmbedding::list_supported_models());
     
     // With custom InitOptions
@@ -33,13 +72,10 @@ fn main() -> anyhow::Result<()> {
 
     // ----
 
-    // Vector dimension must be uniform.
-    let dimension = 384;
-
     // Replace with your own data.
     //let records = Record::many_random(dimension, 100);
 
-    let mut config = Config::default();
+    let config = Config::default();
 
     // Optionally set the distance function. Default to Euclidean.
     //config.distance = Distance::Cosine;
@@ -47,7 +83,7 @@ fn main() -> anyhow::Result<()> {
     // Create a vector collection.
     //let collection = Collection::build(&config, &records).unwrap();
     
-    let mut db = Database::open("data/test").unwrap();
+    let mut db = get_db();
 
     let data = vec!["This is an example.", "Hello world!", "Another example"];
     let vectors = model.embed(data.clone(), None).expect("Cannot create embeddings.");
@@ -60,25 +96,28 @@ fn main() -> anyhow::Result<()> {
         records.push(record);
     }
 
-    //let collection = Collection::build(&config, &records).unwrap();
-    //db.save_collection("vectors", &collection).unwrap();
-    let collection = db.get_collection("vectors").unwrap();
+    let collection = Collection::build(&config, &records).unwrap();
+    db.save_collection(&args.collection, &collection).unwrap();
+    //let collection = db.get_collection(&args.collection).unwrap();
     
     // Search for the nearest neighbors.
-    let data = vec!["This is another example"];
-    let vectors = model.embed(data, None).expect("Cannot create embeddings.");
-    let v = vectors.get(0).expect("uh");
-    let query = Vector((&v).to_vec());
-    let result = collection.search(&query, 2).unwrap();
-
-    for res in result {
-        //println!("{:?}", res);
-        let md = match res.data {
-            Metadata::Text(value) => value,
-            _ => panic!("Data is not a text."),
-        };
-        let (id, distance) = (res.id, res.distance);
-        println!("{distance:.5} | ID: {id} {md}");
+    if let Some(query) = &args.query {
+        println!("Asking {}", &query);
+        let data = vec![&query];
+        let vectors = model.embed(data, None).expect("Cannot create embeddings.");
+        let v = vectors.get(0).expect("uh");
+        let query = Vector((&v).to_vec());
+        let result = collection.search(&query, 2).unwrap();
+        
+        for res in result {
+            //println!("{:?}", res);
+            let md = match res.data {
+                Metadata::Text(value) => value,
+                _ => panic!("Data is not a text."),
+            };
+            let (id, distance) = (res.id, res.distance);
+            println!("{distance:.5} | ID: {id} {md}");
+        }
     }
     
     Ok(())
