@@ -1,8 +1,18 @@
 use fastembed::{TextEmbedding, InitOptions, EmbeddingModel};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
+use surrealdb::engine::local::Mem;
+use surrealdb::sql::Thing;
+use surrealdb::Surreal;
+use surrealdb::engine::local::Db;
+use surrealdb::engine::local::RocksDb;
 
-fn main() -> Result<()> {
+use once_cell::sync::Lazy;
+
+static DB: Lazy<Surreal<Db>> = Lazy::new(Surreal::init);
+
+#[tokio::main]
+async fn main() -> surrealdb::Result<()> {
     // With default InitOptions
     //let model = TextEmbedding::try_new(Default::default()).expect("Cannot initialise model.");
 
@@ -32,46 +42,9 @@ fn main() -> Result<()> {
 
     // ----
 
-    /*
-    let dimension = 384;
-
-    let data: &str = "This is an example.";
-    let vector = Vector::random(128);
-    let vectors = model.embed(vec![data], None).expect("Cannot create embeddings.");
-
-    for doc in documents {
-        let v = Vector(vector);
-        let record = Record::new(&v, &data.into());
-    }
-    for vector in vectors {
-        let v = Vector(vector);
-        let record = Record::new(&v, &data.into());
-    }
-    
-    // Replace with your own data.
-    let records = Record::many_random(dimension, 100);
-
-    let mut config = Config::default();
-
-    // Optionally set the distance function. Default to Euclidean.
-    config.distance = Distance::Cosine;
-
-    // Create a vector collection.
-    let collection = Collection::build(&config, &records).unwrap();
-
-    // Optionally save the collection to persist it.
-    let mut db = Database::new("data/test").unwrap();
-    db.save_collection("vectors", &collection).unwrap();
-
-    // Search for the nearest neighbors.
-    let query = Vector::random(dimension);
-    let result = collection.search(&query, 5).unwrap();
-
-    for res in result {
-        let (id, distance) = (res.id, res.distance);
-        println!("{distance:.5} | ID: {id}");
-    }
-*/
+    let db = Surreal::new::<RocksDb>("here").await?;
+    db.use_ns("minerva").use_db("content").await?;
+    println!("{:?}", db);
     
     Ok(())
 }
