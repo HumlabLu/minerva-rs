@@ -107,12 +107,21 @@ fn main() -> anyhow::Result<()> {
         //Collection::build(&config, &records).unwrap()
         let c = Collection::new(&config);
         db.save_collection(&args.collection, &c).unwrap(); // Save it so it exists on disk.
+        /*
+        match db.save_collection(&args.collection, &c) {
+            Ok(_) => c,
+            Err(e) => {
+                eprintln!("Failed to save the new collection: {}", e);
+                panic!("Critical error: could not save collection");
+            }
+        }
+        */
         c
     });
     
     //let ids = collection.insert_many(&new_records).unwrap();
     
-    // Search for the nearest neighbors.
+    // Search for the nearest neighbours.
     if let Some(query) = &args.query {
         println!("Asking {}", &query);
         let data = vec![&query];
