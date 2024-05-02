@@ -2,7 +2,7 @@ use fastembed::{TextEmbedding, InitOptions, EmbeddingModel};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use oasysdb::prelude::*;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use std::collections::HashMap;
 mod database;
 use database::{get_db};
@@ -13,6 +13,9 @@ use embedder::{chunk_string, embed_file_txt, embeddings};
 // =====================================================================
 // Command line arguments.
 // =====================================================================
+
+#[command(name = "Minerva")]
+#[command(about = "Minerva is a RAG", long_about = None)]
 
 #[derive(Parser, Debug, Clone)]
 struct Args {
@@ -39,6 +42,16 @@ struct Args {
     // Extra output
     #[arg(long, short, action, help = "Produce superfluous output.")]
     pub verbose: bool,
+
+    #[command(subcommand)]
+    pub command: Commands,
+}
+
+#[derive(Debug, Subcommand, Clone)]
+pub enum Commands {
+    /// List collection.
+    List {
+    },
 }
 
 // =====================================================================
@@ -112,10 +125,16 @@ fn main() -> anyhow::Result<()> {
         // And make it persistent.
         db.save_collection(&args.collection, &collection).unwrap();
     }
-    
-    //let list = collection.list().unwrap();
-    //println!("{:?}", list);
-    
+
+    match args.command {
+        Commands::List {  } => {
+            let list = collection.list().unwrap();
+            for (id, item) in list {
+                println!("{} {:?}", id.0, item.data); // data = Metadata
+            }
+        }
+    }
+        
     // Search for the nearest neighbours.
     if let Some(query) = &args.query {
         println!("Asking {}", &query);
