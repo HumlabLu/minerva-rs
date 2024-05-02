@@ -101,19 +101,14 @@ fn main() -> anyhow::Result<()> {
     let mut db = get_db();
 
     //let collection = db.get_collection(&args.collection).unwrap();
-    let collection = match db.get_collection(&args.collection) {
-        Ok(c) => {
-            c
-        }
-        Err(_) => {
-            println!("Creating a new empty collection.");
-            let config = Config::default();
-            //Collection::build(&config, &records).unwrap()
-            let c = Collection::new(&config);
-            db.save_collection(&args.collection, &c).unwrap(); // Save it so it exists on disk.
-            c
-        }
-    };
+    let collection = db.get_collection(&args.collection).unwrap_or_else(|_| {
+        println!("Creating a new empty collection.");
+        let config = Config::default();
+        //Collection::build(&config, &records).unwrap()
+        let c = Collection::new(&config);
+        db.save_collection(&args.collection, &c).unwrap(); // Save it so it exists on disk.
+        c
+    });
     
     //let ids = collection.insert_many(&new_records).unwrap();
     
