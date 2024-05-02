@@ -6,6 +6,9 @@ use clap::Parser;
 use std::collections::HashMap;
 mod database;
 use database::{get_db};
+mod embedder;
+use embedder::{chunk_string};
+
 
 // =====================================================================
 // Command line arguments.
@@ -72,11 +75,6 @@ fn main() -> anyhow::Result<()> {
 
     // ----
 
-    // Replace with your own data.
-    //let records = Record::many_random(dimension, 100);
-
-    
-
     // Optionally set the distance function. Default to Euclidean.
     //config.distance = Distance::Cosine;
 
@@ -140,6 +138,10 @@ fn main() -> anyhow::Result<()> {
             println!("{distance:.5} | ID: {id} {md}");
         }
     }
+
+    // chunk test
+    let txt = "This is a small text.".to_string();
+    println!("{:?}", chunk_string(txt, 10)); //args.chunksize));
     
     Ok(())
 }
