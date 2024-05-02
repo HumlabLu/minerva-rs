@@ -13,6 +13,7 @@ pub fn get_db() -> Database {
     let args = Args::parse(); // Should not be here, have function args instead.
     let mut db = Database::open("data/test").unwrap();
     // let collection = db.get_collection("vectors").unwrap();
+    println!("DB contains {} items.", db.len());
     db
 }
 
