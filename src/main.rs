@@ -44,7 +44,7 @@ struct Args {
     pub verbose: bool,
 
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: Option<Commands>,
 }
 
 #[derive(Debug, Subcommand, Clone)]
@@ -120,19 +120,20 @@ fn main() -> anyhow::Result<()> {
 
         // Add it to the current collection.
         let ids = collection.insert_many(&records).unwrap();
-        println!("{:?}", ids);
+        println!("Added {:?} items", ids.len());
 
         // And make it persistent.
         db.save_collection(&args.collection, &collection).unwrap();
     }
 
     match args.command {
-        Commands::List {  } => {
+        Some(Commands::List { }) => {
             let list = collection.list().unwrap();
             for (id, item) in list {
-                println!("{} {:?}", id.0, item.data); // data = Metadata
+                println!("{:5} | {:?}", id.0, item.data); // data = Metadata
             }
-        }
+        },
+        None => {}
     }
         
     // Search for the nearest neighbours.
@@ -150,7 +151,7 @@ fn main() -> anyhow::Result<()> {
             //println!("{:?}", res);
             let md = match res.data {
                 Metadata::Text(value) => value,
-                _ => "Data is not a text.".to_string()
+                _ => "Data is not text.".to_string()
             };
             let (id, distance) = (res.id, res.distance);
             println!("{distance:.5} | ID: {id} {md}");
