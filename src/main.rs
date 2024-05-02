@@ -7,7 +7,7 @@ use std::collections::HashMap;
 mod database;
 use database::{get_db};
 mod embedder;
-use embedder::{chunk_string};
+use embedder::{chunk_string, embed_file_txt};
 
 
 // =====================================================================
@@ -46,6 +46,8 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     dbg!("{:?}", &args);
     //let filename = &args.filename;
+
+    //println!("{:?}", embed_file_txt("texts/water.txt", args.chunksize));
     
     // With default InitOptions
     //let model = TextEmbedding::try_new(Default::default()).expect("Cannot initialise model.");
@@ -70,7 +72,7 @@ fn main() -> anyhow::Result<()> {
     let embeddings = model.embed(documents, None).expect("Cannot create embeddings.");
     //println!("{:?}", embeddings);
     
-    println!("Embeddings length: {}", embeddings.len()); // -> Embeddings length: 4
+    println!("Embeddings count: {}", embeddings.len()); // -> Embeddings length: 4
     println!("Embedding dimension: {}", embeddings[0].len()); // -> Embedding dimension: 384
 
     // ----
@@ -81,7 +83,7 @@ fn main() -> anyhow::Result<()> {
     // Create a vector collection.
     //let collection = Collection::build(&config, &records).unwrap();
 
-    let data = vec!["This is an example.", "Hello world!", "Another example"];
+    let data = embed_file_txt("texts/water.txt", args.chunksize).unwrap();
     let vectors = model.embed(data.clone(), None).expect("Cannot create embeddings.");
     let mut records = vec![];
     for (chunk, vector) in data.iter().zip(vectors.iter()) {
@@ -94,12 +96,10 @@ fn main() -> anyhow::Result<()> {
         println!("Record {:?}", m0);
         records.push(record);
     }
-
+    
     // This is the saved DB, containing different collections.
     let mut db = get_db();
-
-    //let collection = db.get_collection(&args.collection).unwrap();
-    let collection = db.get_collection(&args.collection).unwrap_or_else(|_| {
+    let mut collection = db.get_collection(&args.collection).unwrap_or_else(|_| {
         println!("Creating a new empty collection.");
         let config = Config::default();
         //Collection::build(&config, &records).unwrap()
@@ -117,7 +117,13 @@ fn main() -> anyhow::Result<()> {
         c
     });
     
-    //let ids = collection.insert_many(&new_records).unwrap();
+    //let ids = collection.insert_many(&records).unwrap();
+    //println!("{:?}", ids);
+    //db.save_collection(&args.collection, &collection).unwrap(); // Save it so it exists on disk.
+    println!("DB now contains {} items.", db.len());
+
+    let list = collection.list().unwrap();
+    //println!("{:?}", list);
     
     // Search for the nearest neighbours.
     if let Some(query) = &args.query {
@@ -128,7 +134,7 @@ fn main() -> anyhow::Result<()> {
         let vectors = model.embed(data, None).expect("Cannot create embeddings.");
         let v = vectors.get(0).expect("uh");
         let query = Vector((&v).to_vec());
-        let result = collection.search(&query, 2).unwrap();
+        let result = collection.search(&query, 8).unwrap();
         
         for res in result {
             //println!("{:?}", res);
@@ -141,11 +147,5 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    // chunk test
-    let txt = "This is a larger   than  large text. Times två!";
-    println!("{:?}", chunk_string(txt, args.chunksize));
-    
     Ok(())
 }
-
-// FEST 7e maj!
