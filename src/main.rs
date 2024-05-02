@@ -28,6 +28,10 @@ struct Args {
     #[arg(long, default_value = "vectors", help = "Name of the database collection.")]
     pub collection: String,
 
+    // The k-nearest neighbours.
+    #[clap(short, long, action, default_value_t = 2, help = "The k-nearest neighbours.")]
+    pub knearest: usize,
+
     // Query
     #[arg(short, long, help = "Question?")]
     pub query: Option<String>,
@@ -46,6 +50,7 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     dbg!("{:?}", &args);
 
+    /*
     let documents = vec![
         "passage: Hello, World!",
         "query: Hello, World!",
@@ -60,7 +65,8 @@ fn main() -> anyhow::Result<()> {
     
     println!("Embeddings count: {}", vectors.len()); // -> Embeddings length: 4
     println!("Embedding dimension: {}", vectors[0].len()); // -> Embedding dimension: 384
-
+     */
+    
     // ----
 
     // This is the saved DB, containing different collections.
@@ -82,7 +88,8 @@ fn main() -> anyhow::Result<()> {
         */
         c
     });
-
+    println!("Size of collection {}.", collection.len());
+    
     if let Some(filename) = &args.filename {
         let data = embed_file_txt(filename, args.chunksize).expect("File does not exist?");
         let vectors = embeddings(data.clone()).expect("Cannot create embeddings.");
@@ -118,7 +125,7 @@ fn main() -> anyhow::Result<()> {
         let vectors = embeddings(data).expect("Cannot create embeddings.");
         let v = vectors.get(0).expect("uh");
         let query = Vector((&v).to_vec());
-        let result = collection.search(&query, 8).unwrap();
+        let result = collection.search(&query, args.knearest).unwrap();
         
         for res in result {
             //println!("{:?}", res);
