@@ -1,5 +1,6 @@
 use std::fs;
 use anyhow::{Result};
+use fastembed::{TextEmbedding, InitOptions, EmbeddingModel, Embedding};
 
 pub fn chunk_string_0(input: String, chunk_size: usize) -> Vec<String> {
     input.chars()
@@ -58,4 +59,18 @@ pub fn chunk_string(input: &str, chunk_size: usize) -> Vec<String> {
 pub fn embed_file_txt(path: &str, chunk_size: usize) -> anyhow::Result<Vec<String>> {
     let contents = fs::read_to_string(path)?;
     Ok(chunk_string(&contents, chunk_size))
+}
+
+
+pub fn embeddings<S: AsRef<str> + Send + Sync>(texts: Vec<S>) -> anyhow::Result<Vec<Embedding>>  {
+    // Instantiate the model.
+    let model = TextEmbedding::try_new(InitOptions {
+        model_name: EmbeddingModel::AllMiniLML6V2,
+        show_download_progress: true,
+        ..Default::default()
+    }).expect("Cannot Initialise model.");
+    
+    // Generate embeddings.
+    let embeddings = model.embed(texts, None).expect("Cannot create embeddings.");
+    Ok(embeddings)
 }

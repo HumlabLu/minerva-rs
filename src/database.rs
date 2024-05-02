@@ -2,6 +2,8 @@ use oasysdb::prelude::*;
 use crate::Args;
 use clap::Parser;
 
+// With custom InitOptions
+
 
 /*
 In short, use Collection to store your vector records or search
@@ -13,7 +15,7 @@ pub fn get_db() -> Database {
     let args = Args::parse(); // Should not be here, have function args instead.
     let mut db = Database::open("data/test").unwrap();
     // let collection = db.get_collection("vectors").unwrap();
-    println!("DB contains {} items.", db.len());
+    println!("DB contains {} collections.", db.len());
     db
 }
 
