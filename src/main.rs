@@ -122,7 +122,9 @@ fn main() -> anyhow::Result<()> {
     // Search for the nearest neighbours.
     if let Some(query) = &args.query {
         println!("Asking {}", &query);
-        let data = vec![&query];
+        
+        let data = chunk_string(query, args.chunksize);
+        println!("{:?}", data);
         let vectors = model.embed(data, None).expect("Cannot create embeddings.");
         let v = vectors.get(0).expect("uh");
         let query = Vector((&v).to_vec());
@@ -140,8 +142,8 @@ fn main() -> anyhow::Result<()> {
     }
 
     // chunk test
-    let txt = "This is a small text.".to_string();
-    println!("{:?}", chunk_string(txt, 10)); //args.chunksize));
+    let txt = "This is a larger   than  large text. Times två!";
+    println!("{:?}", chunk_string(txt, args.chunksize));
     
     Ok(())
 }

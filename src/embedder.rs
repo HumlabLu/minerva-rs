@@ -1,5 +1,7 @@
+use std::fs;
+use anyhow::{Result};
 
-pub fn chunk_string_old(input: String, chunk_size: usize) -> Vec<String> {
+pub fn chunk_string_0(input: String, chunk_size: usize) -> Vec<String> {
     input.chars()
          .collect::<Vec<char>>()  // Convert to a vector of chars
          .chunks(chunk_size)      // Create chunks of specified size
@@ -7,7 +9,7 @@ pub fn chunk_string_old(input: String, chunk_size: usize) -> Vec<String> {
          .collect()               // Collect all chunks into a Vector
 }
 
-pub fn chunk_string(input: String, chunk_size: usize) -> Vec<String> {
+pub fn chunk_string_1(input: String, chunk_size: usize) -> Vec<String> {
     let mut chunks: Vec<String> = input.chars()
         .collect::<Vec<char>>()  // Convert to a vector of chars
         .chunks(chunk_size)      // Create chunks of specified size
@@ -22,4 +24,38 @@ pub fn chunk_string(input: String, chunk_size: usize) -> Vec<String> {
     }
     
     chunks
+}
+
+pub fn chunk_string(input: &str, chunk_size: usize) -> Vec<String> {
+    let words = input.split_whitespace().collect::<Vec<&str>>();
+    let mut chunks = Vec::new();
+    let mut current_chunk = String::new();
+
+    for word in words {
+        // Check if adding this word plus a space would exceed the chunk size.
+        if current_chunk.len() + word.len() + 1 > chunk_size {
+            if !current_chunk.is_empty() {
+                // Push the current chunk to the chunks vector.
+                chunks.push(current_chunk);
+                current_chunk = String::new(); // Reset current chunk.
+            }
+        }
+        // Add word to the current chunk, with space if needed.
+        if !current_chunk.is_empty() {
+            current_chunk.push(' ');
+        }
+        current_chunk.push_str(word);
+    }
+
+    // Possible left-over chunk.
+    if !current_chunk.is_empty() {
+        chunks.push(current_chunk);
+    }
+
+    chunks
+}
+
+pub fn embed_file_txt(path: &str, chunk_size: usize) -> anyhow::Result<Vec<String>> {
+    let contents = fs::read_to_string(path)?;
+    Ok(chunk_string(&contents, chunk_size))
 }
