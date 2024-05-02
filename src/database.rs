@@ -3,11 +3,26 @@ use crate::Args;
 use clap::Parser;
 
 
+/*
+In short, use Collection to store your vector records or search
+similar vectors and use Database to persist a vector collection to the
+disk.
+*/
+
 pub fn get_db() -> Database {
-    let args = Args::parse();
+    let args = Args::parse(); // Should not be here, have function args instead.
     let mut db = Database::open("data/test").unwrap();
+    // let collection = db.get_collection("vectors").unwrap();
     db
 }
+
+pub fn save_db(db: &mut Database) {
+    let collection = db.get_collection("vectors").unwrap();
+    db.save_collection("vectors", &collection).unwrap();
+}
+
+// We need a save, load, new, ...
+
 /*
     // Replace with your own data.
     //let records = Record::many_random(dimension, 100);
@@ -21,17 +36,6 @@ pub fn get_db() -> Database {
     //let collection = Collection::build(&config, &records).unwrap();
     
     let mut db = Database::open("data/test").unwrap();
-
-    let data = vec!["This is an example.", "Hello world!", "Another example"];
-    let vectors = model.embed(data.clone(), None).expect("Cannot create embeddings.");
-    let mut records = vec![];
-    for (chunk, vector) in data.iter().zip(vectors.iter()) {
-        let v = Vector((&vector).to_vec());
-        let m = Metadata::Text((&chunk).to_string());
-        let record = Record::new(&v, &m);
-        println!("Record {:?}", m);
-        records.push(record);
-    }
 
     //let collection = Collection::build(&config, &records).unwrap();
     //db.save_collection("vectors", &collection).unwrap();

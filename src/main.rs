@@ -75,15 +75,13 @@ fn main() -> anyhow::Result<()> {
     // Replace with your own data.
     //let records = Record::many_random(dimension, 100);
 
-    let config = Config::default();
+    
 
     // Optionally set the distance function. Default to Euclidean.
     //config.distance = Distance::Cosine;
 
     // Create a vector collection.
     //let collection = Collection::build(&config, &records).unwrap();
-    
-    let mut db = get_db();
 
     let data = vec!["This is an example.", "Hello world!", "Another example"];
     let vectors = model.embed(data.clone(), None).expect("Cannot create embeddings.");
@@ -99,10 +97,24 @@ fn main() -> anyhow::Result<()> {
         records.push(record);
     }
 
-    let collection = Collection::build(&config, &records).unwrap();
-    db.save_collection(&args.collection, &collection).unwrap();
-    //let collection = db.get_collection(&args.collection).unwrap();
+    // This is the saved DB, containing different collections.
+    let mut db = get_db();
 
+    //let collection = db.get_collection(&args.collection).unwrap();
+    let collection = match db.get_collection(&args.collection) {
+        Ok(c) => {
+            c
+        }
+        Err(_) => {
+            println!("Creating a new empty collection.");
+            let config = Config::default();
+            //Collection::build(&config, &records).unwrap()
+            let c = Collection::new(&config);
+            db.save_collection(&args.collection, &c).unwrap(); // Save it so it exists on disk.
+            c
+        }
+    };
+    
     //let ids = collection.insert_many(&new_records).unwrap();
     
     // Search for the nearest neighbors.
