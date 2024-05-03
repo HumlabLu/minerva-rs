@@ -5,10 +5,10 @@ use oasysdb::prelude::*;
 use clap::{Parser, Subcommand};
 use std::collections::HashMap;
 mod database;
-use database::{get_db};
+use database::{get_db, data_to_record};
 mod embedder;
 use embedder::{chunk_string, embed_file_txt, embeddings};
-
+mod textgen;
 
 // =====================================================================
 // Command line arguments.
@@ -51,6 +51,9 @@ struct Args {
 pub enum Commands {
     /// List collection.
     List {
+    },
+
+    Del {
     },
 }
 
@@ -108,13 +111,9 @@ fn main() -> anyhow::Result<()> {
         let vectors = embeddings(data.clone()).expect("Cannot create embeddings.");
         let mut records = vec![];
         for (chunk, vector) in data.iter().zip(vectors.iter()) {
-            let v = Vector((&vector).to_vec());
-            let m0 = Metadata::Text((&chunk).to_string());
-            let m1 = Metadata::Float(28.);
-            let hm = HashMap::from([("key", "value")]);
-            //let ma = Metadata::Array(vec![m0, m1, hm.into()]);
-            let record = Record::new(&v, &m0);
-            println!("Record {:?}", m0);
+            // With custom InitOptions
+            let record = data_to_record(vector, chunk);
+            println!("Record {:?}", record);
             records.push(record);
         }
 
@@ -126,12 +125,17 @@ fn main() -> anyhow::Result<()> {
         db.save_collection(&args.collection, &collection).unwrap();
     }
 
+    // Shouldn't really mix --paraeters and commands...
     match args.command {
         Some(Commands::List { }) => {
             let list = collection.list().unwrap();
             for (id, item) in list {
                 println!("{:5} | {:?}", id.0, item.data); // data = Metadata
             }
+        },
+        Some(Commands::Del { }) => {
+            db.delete_collection(&args.collection);
+            println!("Deleted collection \"{}\"", &args.collection);
         },
         None => {}
     }
