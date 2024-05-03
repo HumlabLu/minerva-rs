@@ -66,24 +66,7 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
     dbg!("{:?}", &args);
-    
-    /*
-    let documents = vec![
-        "passage: Hello, World!",
-        "query: Hello, World!",
-        "passage: This is an example passage.",
-        // You can leave out the prefix but it's recommended
-        "fastembed-rs is licensed under Apache  2.0"
-    ];
-    
-    // Generate embeddings.
-    let vectors = embeddings(documents).expect("Cannot create embeddings.");
-    //println!("{:?}", embeddings);
-    
-    println!("Embeddings count: {}", vectors.len()); // -> Embeddings length: 4
-    println!("Embedding dimension: {}", vectors[0].len()); // -> Embedding dimension: 384
-     */
-    
+        
     // ----
 
     // This is the saved DB, containing different collections.
