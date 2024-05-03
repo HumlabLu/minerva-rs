@@ -1,6 +1,7 @@
 use std::fs;
 use anyhow::{Result};
 use fastembed::{TextEmbedding, InitOptions, EmbeddingModel, Embedding};
+use text_splitter::{Characters, TextSplitter};
 
 pub fn _chunk_string_0(input: String, chunk_size: usize) -> Vec<String> {
     input.chars()
@@ -56,7 +57,7 @@ pub fn _chunk_string_2(input: &str, chunk_size: usize) -> Vec<String> {
     chunks
 }
 
-pub fn chunk_string(text: &str, max_len: usize) -> Vec<String> {
+pub fn chunk_string_4(text: &str, max_len: usize) -> Vec<String> {
     let mut sentences = Vec::new();
     let punctuation_marks = ['.', '?', '!'];
 
@@ -120,6 +121,17 @@ pub fn chunk_string(text: &str, max_len: usize) -> Vec<String> {
 
     sentences
 }
+
+pub fn chunk_string(text: &str, max_len: usize) -> Vec<String> {
+    // Maximum number of characters in a chunk
+    let max_characters = 225..275;
+    let splitter = TextSplitter::new(max_characters);
+    let chunks = splitter.chunks(text).collect::<Vec<_>>();
+    let chunks: Vec<String> = chunks.into_iter().map(|v| v.to_string()).collect();
+
+    chunks
+}
+
 
 pub fn embed_file_txt(path: &str, chunk_size: usize) -> anyhow::Result<Vec<String>> {
     let contents = fs::read_to_string(path)?;
