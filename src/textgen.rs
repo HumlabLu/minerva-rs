@@ -143,6 +143,7 @@ impl TextGeneration {
             //println!("{}", next_token); // PJB
             generated_tokens += 1;
             if next_token == eos_token || next_token == 198 {
+                println!("BREAK {}", next_token);
                 break;
             }
             let token = self.tokenizer.decode(&[next_token], true).map_err(E::msg)?;
@@ -161,20 +162,20 @@ impl TextGeneration {
 }
 
 
-// Use the retrieved Records as context
-pub fn generate_answer(query: &str, references: Vec<Record>) -> Result<String> {
+// Use the retrieved text as context.
+pub fn generate_answer(query: &str, references: &Vec<String>) -> Result<String> {
 
-    let mut context:Vec<String> = Vec::new();
-/*    for reference in references.clone() {
+    let mut context = Vec::new(); // :Vec<String>
+    for reference in references {
         //println!("{:?}", reference.content_chunk);
         context.push(json!(
             {
-                "content": reference.content_chunk,
-                "metadata": reference.metadata,
+                "context": reference,
+                //"metadata": reference.metadata,
             }
         ))
     }
-*/
+
     let context = json!(context).to_string();
 
     let prompt = format!("<|im_start|>system\nAs a friendly and helpful AI assistant named Athena. Your answer should be very concise and to the point. Do not repeat the question or references. Today is {date}<|im_end|>\n<|im_start|>user\nquestion: \"{question}\"\nreferences: \"{context}\"\n<|im_end|>\n<|im_start|>assistant\n", context=context, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));

@@ -25,7 +25,7 @@ struct Args {
     pub filename: Option<String>, // Path thingy?
 
     // Chunk size
-    #[clap(long, action, default_value_t = 250, help = "Chunk size in characters.")]
+    #[clap(long, action, default_value_t = 512, help = "Chunk size in characters.")]
     pub chunksize: usize,
 
     // Name of the database (collection)
@@ -66,7 +66,7 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
     dbg!("{:?}", &args);
-
+    
     /*
     let documents = vec![
         "passage: Hello, World!",
@@ -151,7 +151,8 @@ fn main() -> anyhow::Result<()> {
         let v = vectors.get(0).expect("uh");
         let embedded_query = Vector((&v).to_vec());
         let result = collection.search(&embedded_query, args.knearest).unwrap();
-        
+
+        let mut string_context = vec![];
         for res in result {
             //println!("{:?}", res);
             let md = match res.data {
@@ -160,12 +161,14 @@ fn main() -> anyhow::Result<()> {
             };
             let (id, distance) = (res.id, res.distance);
             println!("{distance:.5} | ID: {id} {md}");
+            string_context.push(md.clone());
         }
-
-        let ans = generate_answer(&query, vec![]);
+        let ts_start = chrono::Local::now();
+        let ans = generate_answer(&query, &string_context);
+        let ts_end = chrono::Local::now();
+        println!("{:?}", ts_end - ts_start);
         println!("{:?}", ans);
     }
-
 
     Ok(())
 }
