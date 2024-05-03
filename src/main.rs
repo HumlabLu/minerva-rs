@@ -9,6 +9,7 @@ use database::{get_db, data_to_record};
 mod embedder;
 use embedder::{chunk_string, embed_file_txt, embeddings};
 mod textgen;
+use textgen::{generate_answer};
 
 // =====================================================================
 // Command line arguments.
@@ -148,8 +149,8 @@ fn main() -> anyhow::Result<()> {
         println!("{:?}", data);
         let vectors = embeddings(data).expect("Cannot create embeddings.");
         let v = vectors.get(0).expect("uh");
-        let query = Vector((&v).to_vec());
-        let result = collection.search(&query, args.knearest).unwrap();
+        let embedded_query = Vector((&v).to_vec());
+        let result = collection.search(&embedded_query, args.knearest).unwrap();
         
         for res in result {
             //println!("{:?}", res);
@@ -160,7 +161,11 @@ fn main() -> anyhow::Result<()> {
             let (id, distance) = (res.id, res.distance);
             println!("{distance:.5} | ID: {id} {md}");
         }
+
+        let ans = generate_answer(&query, vec![]);
+        println!("{:?}", ans);
     }
+
 
     Ok(())
 }

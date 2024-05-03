@@ -186,6 +186,7 @@ pub fn generate_answer(query: &str, references: Vec<Record>) -> Result<String> {
     /*if args.verbose == true {
         println!("{}", prompt); // PJB
     }*/
+    println!("{}", prompt); // PJB
     
     /*
         model: QMixFormer,
