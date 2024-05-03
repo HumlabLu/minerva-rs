@@ -21,9 +21,7 @@ use hf_hub::{api::sync::Api, Repo};
 use lazy_static::lazy_static;
 use serde_json::json;
 use tokenizers::Tokenizer;
-use clap::Parser;
 use candle_core::utils::{cuda_is_available, metal_is_available};
-use oasysdb::prelude::*;
 
 // https://github.com/huggingface/candle/blob/main/candle-examples/src/lib.rs
 pub fn device(cpu: bool) -> Result<Device> {
@@ -151,12 +149,7 @@ impl TextGeneration {
             response += &token;
         }
         let dt = start_gen.elapsed();
-        /*
-        debug!(
-            generated_tokens = generated_tokens,
-            speed = format!("{:.2} token/s", generated_tokens as f64 / dt.as_secs_f64()),
-            "inference loop finished"
-        );*/
+        println!("{:.2} token/s", generated_tokens as f64 / dt.as_secs_f64());
         Ok(response.trim().to_string())
     }
 }

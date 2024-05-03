@@ -1,7 +1,6 @@
 use std::fs;
-use anyhow::{Result};
 use fastembed::{TextEmbedding, InitOptions, EmbeddingModel, Embedding};
-use text_splitter::{Characters, TextSplitter};
+use text_splitter::{TextSplitter};
 
 pub fn _chunk_string_0(input: String, chunk_size: usize) -> Vec<String> {
     input.chars()
@@ -57,15 +56,15 @@ pub fn _chunk_string_2(input: &str, chunk_size: usize) -> Vec<String> {
     chunks
 }
 
-pub fn chunk_string_4(text: &str, max_len: usize) -> Vec<String> {
+pub fn _chunk_string_3(text: &str, max_len: usize) -> Vec<String> {
     let mut sentences = Vec::new();
     let punctuation_marks = ['.', '?', '!'];
 
     // Split text into sentences based on punctuation, preserving the delimiter
     let mut start = 0;
-    for (index, matched) in text.match_indices(|c| punctuation_marks.contains(&c)) {
+    for (index, _matched) in text.match_indices(|c| punctuation_marks.contains(&c)) {
         let end = index + 1;
-        let mut sentence = text[start..end].trim().to_string();
+        let sentence = text[start..end].trim().to_string();
         start = end;
 
         // Handle each sentence based on its length
@@ -124,10 +123,10 @@ pub fn chunk_string_4(text: &str, max_len: usize) -> Vec<String> {
 
 pub fn chunk_string(text: &str, max_len: usize) -> Vec<String> {
     // Maximum number of characters in a chunk
-    let max_characters = 225..275;
+    let max_characters = max_len-25..max_len+25; //225..275;
     let splitter = TextSplitter::new(max_characters);
     let chunks = splitter.chunks(text).collect::<Vec<_>>();
-    let chunks: Vec<String> = chunks.into_iter().map(|v| v.to_string()).collect();
+    let chunks: Vec<String> = chunks.into_iter().map(|v| v.to_string()).collect(); // hmmpf.
 
     chunks
 }

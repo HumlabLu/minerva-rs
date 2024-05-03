@@ -1,9 +1,5 @@
-use fastembed::{TextEmbedding, InitOptions, EmbeddingModel};
-use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
 use oasysdb::prelude::*;
 use clap::{Parser, Subcommand};
-use std::collections::HashMap;
 mod database;
 use database::{get_db, data_to_record};
 mod embedder;
@@ -15,10 +11,9 @@ use textgen::{generate_answer};
 // Command line arguments.
 // =====================================================================
 
+#[derive(Parser, Debug, Clone)]
 #[command(name = "Minerva")]
 #[command(about = "Minerva is a RAG", long_about = None)]
-
-#[derive(Parser, Debug, Clone)]
 struct Args {
     // Filename
     #[arg(short, long, help = "The file... but what is it?")]
@@ -118,7 +113,7 @@ fn main() -> anyhow::Result<()> {
             }
         },
         Some(Commands::Del { }) => {
-            db.delete_collection(&args.collection);
+            let _ = db.delete_collection(&args.collection);
             println!("Deleted collection \"{}\"", &args.collection);
         },
         None => {}
