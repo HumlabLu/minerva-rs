@@ -7,7 +7,8 @@ use embedder::{chunk_string, embed_file_txt, embed_file_pdf, embeddings};
 mod textgen;
 use textgen::{generate_answer};
 use std::path::Path;
-//mod mistral;
+mod mistral;
+use mistral::test_mistral;
 
 // =====================================================================
 // Command line arguments.
@@ -64,6 +65,8 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     dbg!("{:?}", &args);
 
+    test_mistral();
+    
     // This is the saved DB, containing different collections.
     let mut db = get_db();
     let mut collection = db.get_collection(&args.collection).unwrap_or_else(|_| {
