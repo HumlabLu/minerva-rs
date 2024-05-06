@@ -1,6 +1,8 @@
 use std::fs;
 use fastembed::{TextEmbedding, InitOptions, EmbeddingModel, Embedding};
 use text_splitter::{TextSplitter};
+use std::path::PathBuf;
+use anyhow::Context;
 
 pub fn _chunk_string_0(input: String, chunk_size: usize) -> Vec<String> {
     input.chars()
@@ -137,10 +139,19 @@ pub fn embed_file_txt(path: &str, chunk_size: usize) -> anyhow::Result<Vec<Strin
     Ok(chunk_string(&contents, chunk_size))
 }
 
-pub fn embed_file_pdf() {
-    let bytes = std::fs::read("tests/simple.pdf").unwrap();
+pub fn embed_file_pdf(path: PathBuf, chunk_size: usize) -> anyhow::Result<Vec<String>> {
+    let display = path.display();
+    let bytes = std::fs::read(path.clone()).unwrap();
     let out = pdf_extract::extract_text_from_mem(&bytes).unwrap();
-    //assert!(out.contains("This is a small demonstration"));
+
+    let file_name = path
+        .file_name()
+        .context("Unable to get filename")?
+        .to_str()
+        .context("Unable to convert filename to string")?;
+    println!("Reading pdf {}", display);
+
+    Ok(chunk_string(&out, chunk_size))
 }
 
 pub fn embeddings<S: AsRef<str> + Send + Sync>(texts: Vec<S>) -> anyhow::Result<Vec<Embedding>>  {
