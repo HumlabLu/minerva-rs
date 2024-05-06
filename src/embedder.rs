@@ -2,7 +2,9 @@ use std::fs;
 use fastembed::{TextEmbedding, InitOptions, EmbeddingModel, Embedding};
 use text_splitter::{TextSplitter};
 use std::path::PathBuf;
+use std::fs::read_dir;
 use anyhow::Context;
+use std::path::Path;
 
 pub fn _chunk_string_0(input: String, chunk_size: usize) -> Vec<String> {
     input.chars()
@@ -131,6 +133,34 @@ pub fn chunk_string(text: &str, max_len: usize) -> Vec<String> {
     let chunks: Vec<String> = chunks.into_iter().map(|v| v.to_string()).collect(); // hmmpf.
 
     chunks
+}
+
+pub fn read_dir_contents<P: AsRef<Path>>(path: P) -> anyhow::Result<Vec<PathBuf>> {
+    // Read the directory
+    let mut file_paths = Vec::new();
+
+    for entry in read_dir(path)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(ext) = path.extension() {
+                if let Some(pfn) = path.file_name().expect("Invalid filename?").to_str() {
+                    if true || pfn.starts_with("0") { // They all seem to start with "0".
+                        if ext == "xml" || ext == "txt" || ext == "wav" {
+                            //println!("File {:?}", path.file_name().unwrap());
+                            file_paths.push(path);
+                        }
+                    }
+                }
+            }
+        } else if path.is_dir() { // Meander down into sub-directories.
+            println!("Dir {:?}", path);
+            for fp in read_dir_contents(path).unwrap() {
+                file_paths.push(fp);
+            }
+        }
+    }
+    Ok(file_paths)   
 }
 
 
