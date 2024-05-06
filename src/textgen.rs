@@ -50,6 +50,30 @@ lazy_static! {
     pub static ref PHI: (QMixFormer, Tokenizer) = load_model().expect("Unable to load model");
 }
 
+/*
+Prompt format: This model uses ChatML prompt format.
+
+<|im_start|>system
+You are Dolphin, a helpful AI assistant.<|im_end|>
+<|im_start|>user
+{prompt}<|im_end|>
+<|im_start|>assistant
+
+Example:
+
+<|im_start|>system
+You are an AI assistant expert at dolphin training<|im_end|>
+<|im_start|>user
+Please give ideas and a detailed plan about how to assemble and train an army of dolphin companions to swim me anywhere I want to go and protect me from my enemies and bring me fish to eat.<|im_end|>
+<|im_start|>assistant
+Assembling, training, and utilizing dolphins as your companions for transportation, protection, and fishing is no small task. However, with careful planning and execution, it can be accomplished. Here's a detailed guide on how to achieve this:
+
+1. **Acquiring Dolphins**: Finding dolphins isn't easy, but you could potentially find them in the wild or at aquariums. For ethical reasons, we suggest acquiring adult dolphins that have been born into captivity. They may not have had as much exposure to humans as their wild counterparts, which makes them easier to handle.
+
+2. ...
+ */
+// mistral-7b-instruct-v0.2.Q4_K_M.gguf
+// zephyr-7b-beta.Q4_K_M.gguf 
 pub fn load_model() -> Result<(QMixFormer, Tokenizer)> {
     let api = Api::new()?.repo(Repo::model(
         "Demonthos/dolphin-2_6-phi-2-candle".to_string(),
@@ -109,6 +133,16 @@ impl TextGeneration {
             Some(token) => *token,
             None => anyhow::bail!("cannot find the endoftext token"),
         };
+        println!("eos token {}", eos_token);
+        
+        //let token = self.tokenizer.decode(&[198], true).map_err(E::msg)?;
+        //println!("token '{}'", token); // \n (or "\n\n"?)
+        /*let eol_token = match self.tokenizer.get_vocab(true).get("apple") {
+            Some(token) => *token,
+            None => anyhow::bail!("cannot find the token"),
+        };
+        println!("eol token {}", eol_token);*/
+        
         let start_gen = std::time::Instant::now();
 
         let mut response = String::new();
@@ -140,7 +174,9 @@ impl TextGeneration {
             tokens.push(next_token);
             //println!("{}", next_token); // PJB
             generated_tokens += 1;
-            if next_token == eos_token || next_token == 198 {
+            if next_token == eos_token || next_token == 198 { // 198 is \n\n
+            //if next_token == eos_token { 
+            //if next_token == 198 {
                 println!("BREAK {}", next_token);
                 break;
             }
@@ -149,7 +185,7 @@ impl TextGeneration {
             response += &token;
         }
         let dt = start_gen.elapsed();
-        println!("{:.2} token/s", generated_tokens as f64 / dt.as_secs_f64());
+        println!("{} tokens, {:.2} token/s", generated_tokens, generated_tokens as f64 / dt.as_secs_f64());
         Ok(response.trim().to_string())
     }
 }
@@ -171,9 +207,7 @@ pub fn generate_answer(query: &str, references: &Vec<String>) -> Result<String> 
 
     let context = json!(context).to_string();
 
-    let prompt = format!("<|im_start|>system\nAs a friendly and helpful AI assistant named Athena. Your answer should be very concise and to the point. Do not repeat the question or references. Today is {date}<|im_end|>\n<|im_start|>user\nquestion: \"{question}\"\nreferences: \"{context}\"\n<|im_end|>\n<|im_start|>assistant\n", context=context, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
-
-    //debug!(prompt =? prompt, "Synthesizing answer with context");
+    let prompt = format!("<|im_start|>system\nYou are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the references. Do not repeat the question or references. Today is {date}<|im_end|>\n<|im_start|>user\nquestion: \"{question}\"\nreferences: \"{context}\"\n<|im_end|>\n<|im_start|>assistant\n", context=context, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
 
     let (model, tokenizer) = &*PHI;
 
@@ -191,14 +225,15 @@ pub fn generate_answer(query: &str, references: &Vec<String>) -> Result<String> 
         repeat_penalty: f32,
         repeat_last_n: usize,
         device: &Device,
-    */
+     */
+    // See also https://www.shuttle.rs/blog/2024/05/01/using-huggingface-rust
     let mut pipeline = TextGeneration::new(
         model.clone(),
         tokenizer.clone(),
         28,
-        Some(0.3),
-        None,
-        1.1,
+        Some(0.4), // temp, higher = more random
+        Some(0.5), // top_p, cumulative probs, a higher value for top-p (e.g., 0.95) will lead to more diverse text, while a lower value (e.g., 0.5) will generate more focused and conservative text. The default value is 0.9.
+        1.3, // repeat_penalty, control the repetition of token sequences in the generated text (default: 1.1).
         64,
         &device(false)?,
     );

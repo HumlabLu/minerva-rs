@@ -137,7 +137,7 @@ fn main() -> anyhow::Result<()> {
         println!("Asking {}", &query);
         
         let data = chunk_string(query, args.chunksize);
-        println!("{:?}", data);
+        //println!("{:?}", data); // Only if verbose!
         let vectors = embeddings(data).expect("Cannot create embeddings.");
         let v = vectors.get(0).expect("uh");
         let embedded_query = Vector((&v).to_vec());
@@ -151,14 +151,14 @@ fn main() -> anyhow::Result<()> {
                 _ => "Data is not text.".to_string()
             };
             let (id, distance) = (res.id, res.distance);
-            println!("{distance:.5} | ID: {id} {md}");
+            //println!("{distance:.5} | ID: {id} {md}"); // Use verbosity
             string_context.push(md.clone());
         }
         let ts_start = chrono::Local::now();
         let ans = generate_answer(&query, &string_context);
         let ts_end = chrono::Local::now();
         println!("{:?}", ts_end - ts_start);
-        println!("{:?}", ans);
+        println!("{:?}", ans.unwrap());
     }
 
     Ok(())
