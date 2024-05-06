@@ -83,7 +83,6 @@ fn main() -> anyhow::Result<()> {
         */
         c
     });
-    println!("Size of collection {}.", collection.len());
     
     if let Some(filename) = &args.filename {
         let data = embed_file_txt(filename, args.chunksize).expect("File does not exist?");
@@ -92,7 +91,7 @@ fn main() -> anyhow::Result<()> {
         for (chunk, vector) in data.iter().zip(vectors.iter()) {
             // With custom InitOptions
             let record = data_to_record(vector, chunk);
-            println!("Record {:?}", record);
+            //println!("Record {:?}", record);
             records.push(record);
         }
 
@@ -103,7 +102,8 @@ fn main() -> anyhow::Result<()> {
         // And make it persistent.
         db.save_collection(&args.collection, &collection).unwrap();
     }
-
+    println!("Size of collection {}.", collection.len());
+    
     // Shouldn't really mix --paraeters and commands...
     match args.command {
         Some(Commands::List { }) => {

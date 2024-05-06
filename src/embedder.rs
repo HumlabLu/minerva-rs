@@ -137,6 +137,11 @@ pub fn embed_file_txt(path: &str, chunk_size: usize) -> anyhow::Result<Vec<Strin
     Ok(chunk_string(&contents, chunk_size))
 }
 
+pub fn embed_file_pdf() {
+    let bytes = std::fs::read("tests/simple.pdf").unwrap();
+    let out = pdf_extract::extract_text_from_mem(&bytes).unwrap();
+    //assert!(out.contains("This is a small demonstration"));
+}
 
 pub fn embeddings<S: AsRef<str> + Send + Sync>(texts: Vec<S>) -> anyhow::Result<Vec<Embedding>>  {
     // Instantiate the model.
