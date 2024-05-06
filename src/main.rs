@@ -7,6 +7,7 @@ use embedder::{chunk_string, embed_file_txt, embed_file_pdf, embeddings};
 mod textgen;
 use textgen::{generate_answer};
 use std::path::Path;
+mod mistral;
 
 // =====================================================================
 // Command line arguments.

@@ -73,7 +73,8 @@ Assembling, training, and utilizing dolphins as your companions for transportati
 2. ...
  */
 // mistral-7b-instruct-v0.2.Q4_K_M.gguf
-// zephyr-7b-beta.Q4_K_M.gguf 
+// zephyr-7b-beta.Q4_K_M.gguf
+// See also https://prest.blog/llm-mistral
 pub fn load_model() -> Result<(QMixFormer, Tokenizer)> {
     let api = Api::new()?.repo(Repo::model(
         "Demonthos/dolphin-2_6-phi-2-candle".to_string(),
