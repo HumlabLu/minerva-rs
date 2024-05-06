@@ -3,9 +3,10 @@ use clap::{Parser, Subcommand};
 mod database;
 use database::{get_db, data_to_record};
 mod embedder;
-use embedder::{chunk_string, embed_file_txt, embeddings};
+use embedder::{chunk_string, embed_file_txt, embed_file_pdf, embeddings};
 mod textgen;
 use textgen::{generate_answer};
+use std::path::Path;
 
 // =====================================================================
 // Command line arguments.
@@ -85,22 +86,34 @@ fn main() -> anyhow::Result<()> {
     });
     
     if let Some(filename) = &args.filename {
-        let data = embed_file_txt(filename, args.chunksize).expect("File does not exist?");
-        let vectors = embeddings(data.clone()).expect("Cannot create embeddings.");
-        let mut records = vec![];
-        for (chunk, vector) in data.iter().zip(vectors.iter()) {
-            // With custom InitOptions
-            let record = data_to_record(vector, chunk);
-            //println!("Record {:?}", record);
-            records.push(record);
+        let path = Path::new(filename);
+        let mut chunked_data: Option<Vec<String>> = None;
+        if path.is_file() {
+            if let Some(ext) = path.extension() {
+                if ext == "txt" {
+                    chunked_data = Some(embed_file_txt(filename, args.chunksize).expect("File does not exist?"));
+                } else if ext == "pdf" {
+                    chunked_data = Some(embed_file_pdf(filename, args.chunksize).expect("File does not exist?"));
+                }
+            }
         }
+        if let Some(data) = chunked_data {
+            let vectors = embeddings(data.clone()).expect("Cannot create embeddings.");
+            let mut records = vec![];
+            for (chunk, vector) in data.iter().zip(vectors.iter()) {
+                // With custom InitOptions
+                let record = data_to_record(vector, chunk);
+                //println!("Record {:?}", record);
+                records.push(record);
+            }
 
-        // Add it to the current collection.
-        let ids = collection.insert_many(&records).unwrap();
-        println!("Added {:?} items", ids.len());
+            // Add it to the current collection.
+            let ids = collection.insert_many(&records).unwrap();
+            println!("Added {:?} items", ids.len());
 
-        // And make it persistent.
-        db.save_collection(&args.collection, &collection).unwrap();
+            // And make it persistent.
+            db.save_collection(&args.collection, &collection).unwrap();
+        }
     }
     println!("Size of collection {}.", collection.len());
     

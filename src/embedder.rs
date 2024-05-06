@@ -6,6 +6,7 @@ use std::fs::read_dir;
 use anyhow::Context;
 use std::path::Path;
 
+// Chunk blindly into parts.
 pub fn _chunk_string_0(input: String, chunk_size: usize) -> Vec<String> {
     input.chars()
          .collect::<Vec<char>>()  // Convert to a vector of chars
@@ -14,6 +15,7 @@ pub fn _chunk_string_0(input: String, chunk_size: usize) -> Vec<String> {
          .collect()               // Collect all chunks into a Vector
 }
 
+// Chunk blindly into parts but merge small chunks with the previous chunk.
 pub fn _chunk_string_1(input: String, chunk_size: usize) -> Vec<String> {
     let mut chunks: Vec<String> = input.chars()
         .collect::<Vec<char>>()  // Convert to a vector of chars
@@ -31,6 +33,8 @@ pub fn _chunk_string_1(input: String, chunk_size: usize) -> Vec<String> {
     chunks
 }
 
+// Chunk around whitespace, try to get the number of characters close
+// to the suggested chunk_size.
 pub fn _chunk_string_2(input: &str, chunk_size: usize) -> Vec<String> {
     let words = input.split_whitespace().collect::<Vec<&str>>();
     let mut chunks = Vec::new();
@@ -60,6 +64,7 @@ pub fn _chunk_string_2(input: &str, chunk_size: usize) -> Vec<String> {
     chunks
 }
 
+// Chunk on end-of-sentence markers.
 pub fn _chunk_string_3(text: &str, max_len: usize) -> Vec<String> {
     let mut sentences = Vec::new();
     let punctuation_marks = ['.', '?', '!'];
@@ -125,6 +130,15 @@ pub fn _chunk_string_3(text: &str, max_len: usize) -> Vec<String> {
     sentences
 }
 
+// Use textsplitter-rs.
+/*
+text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=800,
+        chunk_overlap=80,
+        length_function=len,
+        is_separator_regex=False,
+)
+*/
 pub fn chunk_string(text: &str, max_len: usize) -> Vec<String> {
     // Maximum number of characters in a chunk
     let max_characters = max_len-25..max_len+25; //225..275;
@@ -135,6 +149,7 @@ pub fn chunk_string(text: &str, max_len: usize) -> Vec<String> {
     chunks
 }
 
+// Return a vector with filenames with correct extension.
 pub fn read_dir_contents<P: AsRef<Path>>(path: P) -> anyhow::Result<Vec<PathBuf>> {
     // Read the directory
     let mut file_paths = Vec::new();
@@ -145,11 +160,8 @@ pub fn read_dir_contents<P: AsRef<Path>>(path: P) -> anyhow::Result<Vec<PathBuf>
         if path.is_file() {
             if let Some(ext) = path.extension() {
                 if let Some(pfn) = path.file_name().expect("Invalid filename?").to_str() {
-                    if true || pfn.starts_with("0") { // They all seem to start with "0".
-                        if ext == "xml" || ext == "txt" || ext == "wav" {
-                            //println!("File {:?}", path.file_name().unwrap());
-                            file_paths.push(path);
-                        }
+                    if ext == "xml" || ext == "txt" {
+                        file_paths.push(path);
                     }
                 }
             }
@@ -169,18 +181,9 @@ pub fn embed_file_txt(path: &str, chunk_size: usize) -> anyhow::Result<Vec<Strin
     Ok(chunk_string(&contents, chunk_size))
 }
 
-pub fn embed_file_pdf(path: PathBuf, chunk_size: usize) -> anyhow::Result<Vec<String>> {
-    let display = path.display();
+pub fn embed_file_pdf(path: &str, chunk_size: usize) -> anyhow::Result<Vec<String>> {
     let bytes = std::fs::read(path.clone()).unwrap();
     let out = pdf_extract::extract_text_from_mem(&bytes).unwrap();
-
-    let file_name = path
-        .file_name()
-        .context("Unable to get filename")?
-        .to_str()
-        .context("Unable to convert filename to string")?;
-    println!("Reading pdf {}", display);
-
     Ok(chunk_string(&out, chunk_size))
 }
 
