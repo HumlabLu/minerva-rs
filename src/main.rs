@@ -7,6 +7,7 @@ use embedder::{chunk_string, embed_file_txt, embed_file_pdf, embeddings};
 mod textgen;
 use textgen::{generate_answer};
 use std::path::Path;
+//mod mistral;
 
 // =====================================================================
 // Command line arguments.
@@ -156,7 +157,7 @@ fn main() -> anyhow::Result<()> {
         let ans = generate_answer(&query, &string_context);
         let ts_end = chrono::Local::now();
         println!("{:?}", ts_end - ts_start);
-        println!("{:?}", ans.unwrap());
+        println!("{:?}", ans.unwrap().trim().to_string());
     }
 
     Ok(())

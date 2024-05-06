@@ -78,6 +78,7 @@ Assembling, training, and utilizing dolphins as your companions for transportati
 pub fn load_model() -> Result<(QMixFormer, Tokenizer)> {
     let api = Api::new()?.repo(Repo::model(
         "Demonthos/dolphin-2_6-phi-2-candle".to_string(),
+        //"lmz/candle-mistral".to_string(),
     ));
     let tokenizer_filename = api.get("tokenizer.json")?;
     let weights_filename = api.get("model-q4k.gguf")?;

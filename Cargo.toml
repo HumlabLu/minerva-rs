@@ -7,9 +7,9 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.82"
-candle-core = "0.4.1"
-candle-nn = "0.4.1"
-candle-transformers = "0.4.1"
+candle-core = { git = "https://github.com/huggingface/candle", branch = "main" }
+candle-transformers = { git = "https://github.com/huggingface/candle", branch = "main" }
+candle-nn = { git = "https://github.com/huggingface/candle", branch = "main" }
 chrono = "0.4.38"
 clap = { version = "4.5.4", features = ["derive"] }
 fastembed = "3.5.0"
