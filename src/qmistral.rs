@@ -13,7 +13,7 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     let prompt: Option<String> = None;
 
     // The length of the sample to generate (in tokens).
-    let sample_len: usize = 400;
+    let sample_len: usize = 800;
 
     // The temperature used to generate samples, use 0 for greedy sampling.
     let temperature: f64 = 0.8;
@@ -22,7 +22,7 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     let top_p: Option<f64> = None;
 
     // The seed to use when generating random samples.
-    let seed: u64 = 299792458;
+    let seed: u64 = 28;//299792458;
 
     // Display the token for the specified prompt.
     let verbose_prompt: bool = false;
@@ -40,10 +40,12 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     };
     
     //let repo = "TheBloke/Mistral-7B-v0.1-GGUF";
-    let repo = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF";
+    let repo = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF"; // 0.1, 0.2
 
-    // let filename = h"mistral-7b-instruct-v0.1.Q4_K_S.gguf";
-    let filename = "mistral-7b-instruct-v0.1.Q2_K.gguf";
+    // See list on https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF
+   
+    let filename = "mistral-7b-instruct-v0.1.Q4_K_M.gguf"; // _S _M
+    //let filename = "mistral-7b-instruct-v0.1.Q2_K.gguf"; // 0.1, 0.2
 
     let api = hf_hub::api::sync::Api::new()?;
     let api = api.model(repo.to_string());
@@ -86,9 +88,10 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     
     let mut pre_prompt_tokens = vec![];
     //let prompt = Some("What is light?".to_string()); // PJB
-    let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. We is Peter and Elisabet. They live in Rörums Holma. We is Peter and Elisabet.}]".to_string());
+    let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. We is Peter and Elisabet. They live in Rörums Holma. We refers to Peter and Elisabet.}]".to_string());
     //let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius?".to_string());
-
+    //let prompt = Some("Write a story.".to_string());
+    
     let prompt_str = {
         let prompt = if let Some(ref prompt) = prompt {
             prompt.to_owned()
