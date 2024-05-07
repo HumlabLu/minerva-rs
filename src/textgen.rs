@@ -209,7 +209,7 @@ pub fn generate_answer(query: &str, references: &Vec<String>) -> Result<String> 
 
     let context = json!(context).to_string();
 
-    let prompt = format!("<|im_start|>system\nYou are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the references. Do not repeat the question or references. Today is {date}<|im_end|>\n<|im_start|>user\nquestion: \"{question}\"\nreferences: \"{context}\"\n<|im_end|>\n<|im_start|>assistant\n", context=context, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+    let prompt = format!("<|im_start|>system\nYou are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is {date}<|im_end|>\n<|im_start|>user\nquestion: \"{question}\"\nreferences: \"{context}\"\n<|im_end|>\n<|im_start|>assistant\n", context=context, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
 
     let (model, tokenizer) = &*PHI;
 
@@ -233,9 +233,9 @@ pub fn generate_answer(query: &str, references: &Vec<String>) -> Result<String> 
         model.clone(),
         tokenizer.clone(),
         28,
-        Some(0.4), // temp, higher = more random
-        Some(0.5), // top_p, cumulative probs, a higher value for top-p (e.g., 0.95) will lead to more diverse text, while a lower value (e.g., 0.5) will generate more focused and conservative text. The default value is 0.9.
-        1.3, // repeat_penalty, control the repetition of token sequences in the generated text (default: 1.1).
+        Some(0.3), // temp, higher = more random
+        None, //Some(0.5), // top_p, cumulative probs, a higher value for top-p (e.g., 0.95) will lead to more diverse text, while a lower value (e.g., 0.5) will generate more focused and conservative text. The default value is 0.9.
+        1.1, // repeat_penalty, control the repetition of token sequences in the generated text (default: 1.1).
         64,
         &device(false)?,
     );

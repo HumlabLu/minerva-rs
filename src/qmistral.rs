@@ -1,0 +1,247 @@
+use std::io::Write;
+use tokenizers::Tokenizer;
+
+use candle_core::quantized::gguf_file;
+use candle_core::{Device, Tensor};
+use candle_transformers::generation::LogitsProcessor;
+
+use candle_transformers::models::quantized_llama as model;
+use model::ModelWeights;
+
+pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
+    // The prompt. If None, then, will be an iteractive chat.
+    let prompt: Option<String> = None;
+
+    // The length of the sample to generate (in tokens).
+    let sample_len: usize = 100;
+
+    // The temperature used to generate samples, use 0 for greedy sampling.
+    let temperature: f64 = 0.8;
+
+    // Nucleus sampling probability cutoff.
+    let top_p: Option<f64> = None;
+
+    // The seed to use when generating random samples.
+    let seed: u64 = 299792458;
+
+    // Display the token for the specified prompt.
+    let verbose_prompt: bool = false;
+
+    // Penalty to be applied for repeating tokens, 1. means no penalty.
+    let repeat_penalty: f32 = 1.1;
+
+    // The context size to consider for the repeat penalty.
+    let repeat_last_n: usize = 64;
+
+    let temperature = if temperature == 0. {
+        None
+    } else {
+        Some(temperature)
+    };
+    
+    //let repo = "TheBloke/Mistral-7B-v0.1-GGUF";
+    let repo = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF";
+
+    // let filename = h"mistral-7b-instruct-v0.1.Q4_K_S.gguf";
+    let filename = "mistral-7b-instruct-v0.1.Q2_K.gguf";
+
+    let api = hf_hub::api::sync::Api::new()?;
+    let api = api.model(repo.to_string());
+    let model_path = api.get(filename)?;
+
+    let mut file = std::fs::File::open(model_path)?;
+    let start = std::time::Instant::now();
+    let device = Device::Cpu;
+
+    let mut model = {
+        let model = gguf_file::Content::read(&mut file)?;
+        let mut total_size_in_bytes = 0;
+        for (_, tensor) in model.tensor_infos.iter() {
+            let elem_count = tensor.shape.elem_count();
+            total_size_in_bytes += elem_count
+                * tensor.ggml_dtype.type_size()
+                / tensor.ggml_dtype.block_size();
+        }
+
+        println!(
+            "loaded {:?} tensors ({}) in {:.2}s",
+            model.tensor_infos.len(),
+            &format_size(total_size_in_bytes),
+            start.elapsed().as_secs_f32(),
+        );
+        ModelWeights::from_gguf(model, &mut file, &device)?
+    };
+
+    println!("model built");
+
+    let api = hf_hub::api::sync::Api::new().expect("api");
+    let repo = "mistralai/Mistral-7B-v0.1";
+    let api = api.model(repo.to_string());
+
+    let tokenizer_path = api.get("tokenizer.json").expect("tokeniser");
+    println!("{:?}", tokenizer_path);
+    let tokenizer = Tokenizer::from_file(tokenizer_path)
+        .map_err(|e| format!("Error loading tokenizer: {e}"))?;
+    
+    let mut pre_prompt_tokens = vec![];
+    let prompt = Some("What is light?".to_string()); // PJB
+    let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. We is Peter and Elisabet. They live in Rörums Holma. We is Peter and Elisabet.}]".to_string());
+    
+    loop {
+        let prompt_str = {
+            let prompt = if let Some(ref prompt) = prompt {
+                prompt.to_owned()
+            } else {
+                print!("> ");
+                std::io::stdout().flush()?;
+                let mut prompt = String::new();
+                std::io::stdin().read_line(&mut prompt)?;
+                if prompt.ends_with('\n') {
+                    prompt.pop();
+                    if prompt.ends_with('\r') {
+                        prompt.pop();
+                    }
+                }
+                prompt
+            };
+
+            format!("[INST] {prompt} [/INST]")
+        };
+
+        print!("{}", &prompt_str);
+        let tokens = tokenizer
+            .encode(prompt_str, true)
+            .map_err(|e| format!("Error encoding tokenizer: {e}"))?;
+        if verbose_prompt {
+            for (token, id) in
+                tokens.get_tokens().iter().zip(tokens.get_ids().iter())
+            {
+                let token =
+                    token.replace('▁', " ").replace("<0x0A>", "\n");
+                println!("{id:7} -> '{token}'");
+            }
+        }
+
+        let prompt_tokens =
+            [&pre_prompt_tokens, tokens.get_ids()].concat();
+        let to_sample = sample_len.saturating_sub(1);
+        let prompt_tokens = if prompt_tokens.len() + to_sample
+            > model::MAX_SEQ_LEN - 10
+        {
+            let to_remove =
+                prompt_tokens.len() + to_sample + 10 - model::MAX_SEQ_LEN;
+            prompt_tokens[prompt_tokens.len().saturating_sub(to_remove)..]
+                .to_vec()
+        } else {
+            prompt_tokens
+        };
+
+        let mut all_tokens = vec![];
+        let mut logits_processor =
+            LogitsProcessor::new(seed, temperature, top_p);
+
+        let start_prompt_processing = std::time::Instant::now();
+        let mut next_token = {
+            let input = Tensor::new(prompt_tokens.as_slice(), &device)?
+                .unsqueeze(0)?;
+            let logits = model.forward(&input, 0)?;
+            let logits = logits.squeeze(0)?;
+            logits_processor.sample(&logits)?
+        };
+
+        let prompt_dt = start_prompt_processing.elapsed();
+        all_tokens.push(next_token);
+        print_token(next_token, &tokenizer);
+
+        let eos_token = *tokenizer.get_vocab(true).get("</s>").unwrap();
+
+        let start_post_prompt = std::time::Instant::now();
+        for index in 0..to_sample {
+            let input =
+                Tensor::new(&[next_token], &device)?.unsqueeze(0)?;
+            let logits =
+                model.forward(&input, prompt_tokens.len() + index)?;
+            let logits = logits.squeeze(0)?;
+            let logits = if repeat_penalty == 1. {
+                logits
+            } else {
+                let start_at =
+                    all_tokens.len().saturating_sub(repeat_last_n);
+                candle_transformers::utils::apply_repeat_penalty(
+                    &logits,
+                    repeat_penalty,
+                    &all_tokens[start_at..],
+                )?
+            };
+            next_token = logits_processor.sample(&logits)?;
+            all_tokens.push(next_token);
+            print_token(next_token, &tokenizer);
+            if next_token == eos_token {
+                break;
+            };
+        }
+
+        let dt = start_post_prompt.elapsed();
+        println!(
+            "\n\n{:4} prompt tokens processed: {:.2} token/s",
+            prompt_tokens.len(),
+            prompt_tokens.len() as f64 / prompt_dt.as_secs_f64(),
+        );
+
+        println!(
+            "{:4} tokens generated: {:.2} token/s",
+            to_sample,
+            to_sample as f64 / dt.as_secs_f64(),
+        );
+
+        match prompt {
+            Some(_) => break,
+            None => {
+                pre_prompt_tokens =
+                    [prompt_tokens.as_slice(), all_tokens.as_slice()]
+                        .concat()
+            }
+        }
+    }
+
+    Ok(())
+}
+
+
+fn print_token(next_token: u32, tokenizer: &Tokenizer) {
+    // Extracting the last token as a string is complicated, here we just apply some simple
+    // heuristics as it seems to work well enough for this example. See the following for more
+    // details:
+    // https://github.com/huggingface/tokenizers/issues/1141#issuecomment-1562644141
+    if let Some(text) = tokenizer.id_to_token(next_token) {
+        let text = text.replace('▁', " ");
+        let ascii = text
+            .strip_prefix("<0x")
+            .and_then(|t| t.strip_suffix('>'))
+            .and_then(|t| u8::from_str_radix(t, 16).ok());
+        match ascii {
+            None => print!("{text}"),
+            Some(ascii) => {
+                if let Some(chr) = char::from_u32(ascii as u32) {
+                    if chr.is_ascii() {
+                        print!("{chr}")
+                    }
+                }
+            }
+        }
+        let _ = std::io::stdout().flush();
+    }
+}
+
+fn format_size(size_in_bytes: usize) -> String {
+    if size_in_bytes < 1_000 {
+        format!("{}B", size_in_bytes)
+    } else if size_in_bytes < 1_000_000 {
+        format!("{:.2}KB", size_in_bytes as f64 / 1e3)
+    } else if size_in_bytes < 1_000_000_000 {
+        format!("{:.2}MB", size_in_bytes as f64 / 1e6)
+    } else {
+        format!("{:.2}GB", size_in_bytes as f64 / 1e9)
+    }
+
+}

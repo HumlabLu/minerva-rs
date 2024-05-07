@@ -9,6 +9,8 @@ use textgen::{generate_answer};
 use std::path::Path;
 mod mistral;
 use mistral::test_mistral;
+mod qmistral;
+use qmistral::run_main;
 
 // =====================================================================
 // Command line arguments.
@@ -64,8 +66,9 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
     dbg!("{:?}", &args);
-
-    test_mistral();
+    
+    //test_mistral();
+    run_main();
     
     // This is the saved DB, containing different collections.
     let mut db = get_db();
