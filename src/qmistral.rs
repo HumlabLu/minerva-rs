@@ -13,7 +13,7 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     let prompt: Option<String> = None;
 
     // The length of the sample to generate (in tokens).
-    let sample_len: usize = 100;
+    let sample_len: usize = 400;
 
     // The temperature used to generate samples, use 0 for greedy sampling.
     let temperature: f64 = 0.8;
@@ -73,7 +73,8 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     println!("model built");
-
+    println!("model::MAX_SEQ_LEN {}", model::MAX_SEQ_LEN);
+    
     let api = hf_hub::api::sync::Api::new().expect("api");
     let repo = "mistralai/Mistral-7B-v0.1";
     let api = api.model(repo.to_string());
@@ -84,125 +85,106 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|e| format!("Error loading tokenizer: {e}"))?;
     
     let mut pre_prompt_tokens = vec![];
-    let prompt = Some("What is light?".to_string()); // PJB
+    //let prompt = Some("What is light?".to_string()); // PJB
     let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. We is Peter and Elisabet. They live in Rörums Holma. We is Peter and Elisabet.}]".to_string());
-    
-    loop {
-        let prompt_str = {
-            let prompt = if let Some(ref prompt) = prompt {
-                prompt.to_owned()
-            } else {
-                print!("> ");
-                std::io::stdout().flush()?;
-                let mut prompt = String::new();
-                std::io::stdin().read_line(&mut prompt)?;
-                if prompt.ends_with('\n') {
-                    prompt.pop();
-                    if prompt.ends_with('\r') {
-                        prompt.pop();
-                    }
-                }
-                prompt
-            };
+    //let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius?".to_string());
 
-            format!("[INST] {prompt} [/INST]")
-        };
-
-        print!("{}", &prompt_str);
-        let tokens = tokenizer
-            .encode(prompt_str, true)
-            .map_err(|e| format!("Error encoding tokenizer: {e}"))?;
-        if verbose_prompt {
-            for (token, id) in
-                tokens.get_tokens().iter().zip(tokens.get_ids().iter())
-            {
-                let token =
-                    token.replace('▁', " ").replace("<0x0A>", "\n");
-                println!("{id:7} -> '{token}'");
-            }
-        }
-
-        let prompt_tokens =
-            [&pre_prompt_tokens, tokens.get_ids()].concat();
-        let to_sample = sample_len.saturating_sub(1);
-        let prompt_tokens = if prompt_tokens.len() + to_sample
-            > model::MAX_SEQ_LEN - 10
-        {
-            let to_remove =
-                prompt_tokens.len() + to_sample + 10 - model::MAX_SEQ_LEN;
-            prompt_tokens[prompt_tokens.len().saturating_sub(to_remove)..]
-                .to_vec()
+    let prompt_str = {
+        let prompt = if let Some(ref prompt) = prompt {
+            prompt.to_owned()
         } else {
-            prompt_tokens
-        };
-
-        let mut all_tokens = vec![];
-        let mut logits_processor =
-            LogitsProcessor::new(seed, temperature, top_p);
-
-        let start_prompt_processing = std::time::Instant::now();
-        let mut next_token = {
-            let input = Tensor::new(prompt_tokens.as_slice(), &device)?
-                .unsqueeze(0)?;
-            let logits = model.forward(&input, 0)?;
-            let logits = logits.squeeze(0)?;
-            logits_processor.sample(&logits)?
-        };
-
-        let prompt_dt = start_prompt_processing.elapsed();
-        all_tokens.push(next_token);
-        print_token(next_token, &tokenizer);
-
-        let eos_token = *tokenizer.get_vocab(true).get("</s>").unwrap();
-
-        let start_post_prompt = std::time::Instant::now();
-        for index in 0..to_sample {
-            let input =
-                Tensor::new(&[next_token], &device)?.unsqueeze(0)?;
-            let logits =
-                model.forward(&input, prompt_tokens.len() + index)?;
-            let logits = logits.squeeze(0)?;
-            let logits = if repeat_penalty == 1. {
-                logits
-            } else {
-                let start_at =
-                    all_tokens.len().saturating_sub(repeat_last_n);
-                candle_transformers::utils::apply_repeat_penalty(
-                    &logits,
-                    repeat_penalty,
-                    &all_tokens[start_at..],
-                )?
-            };
-            next_token = logits_processor.sample(&logits)?;
-            all_tokens.push(next_token);
-            print_token(next_token, &tokenizer);
-            if next_token == eos_token {
-                break;
-            };
-        }
-
-        let dt = start_post_prompt.elapsed();
-        println!(
-            "\n\n{:4} prompt tokens processed: {:.2} token/s",
-            prompt_tokens.len(),
-            prompt_tokens.len() as f64 / prompt_dt.as_secs_f64(),
-        );
-
-        println!(
-            "{:4} tokens generated: {:.2} token/s",
-            to_sample,
-            to_sample as f64 / dt.as_secs_f64(),
-        );
-
-        match prompt {
-            Some(_) => break,
-            None => {
-                pre_prompt_tokens =
-                    [prompt_tokens.as_slice(), all_tokens.as_slice()]
-                        .concat()
+            print!("> ");
+            std::io::stdout().flush()?;
+            let mut prompt = String::new();
+            std::io::stdin().read_line(&mut prompt)?;
+            if prompt.ends_with('\n') {
+                prompt.pop();
+                if prompt.ends_with('\r') {
+                    prompt.pop();
+                }
             }
+            prompt
+        };
+
+        format!("[INST] {prompt} [/INST]")
+    };
+
+    println!("{}", &prompt_str);
+    let tokens = tokenizer
+        .encode(prompt_str, true)
+        .map_err(|e| format!("Error encoding tokenizer: {e}"))?;
+        
+    if verbose_prompt {
+        for (token, id) in tokens.get_tokens().iter().zip(tokens.get_ids().iter()) {
+            let token = token.replace('▁', " ").replace("<0x0A>", "\n");
+            println!("{id:7} -> '{token}'");
         }
     }
+
+    let prompt_tokens = [&pre_prompt_tokens, tokens.get_ids()].concat();
+    let to_sample = sample_len.saturating_sub(1);
+    let prompt_tokens = if prompt_tokens.len() + to_sample > model::MAX_SEQ_LEN - 10 {
+        let to_remove = prompt_tokens.len() + to_sample + 10 - model::MAX_SEQ_LEN;
+        prompt_tokens[prompt_tokens.len().saturating_sub(to_remove)..]
+            .to_vec()
+    } else {
+        prompt_tokens
+    };
+
+    let mut all_tokens = vec![];
+    let mut logits_processor = LogitsProcessor::new(seed, temperature, top_p);
+
+    let start_prompt_processing = std::time::Instant::now();
+    let mut next_token = {
+        let input = Tensor::new(prompt_tokens.as_slice(), &device)?
+            .unsqueeze(0)?;
+        let logits = model.forward(&input, 0)?;
+        let logits = logits.squeeze(0)?;
+        logits_processor.sample(&logits)?
+    };
+
+    let prompt_dt = start_prompt_processing.elapsed();
+    all_tokens.push(next_token);
+    print_token(next_token, &tokenizer);
+
+    let eos_token = *tokenizer.get_vocab(true).get("</s>").unwrap();
+
+    let start_post_prompt = std::time::Instant::now();
+    for index in 0..to_sample {
+        let input = Tensor::new(&[next_token], &device)?.unsqueeze(0)?;
+        let logits = model.forward(&input, prompt_tokens.len() + index)?;
+        let logits = logits.squeeze(0)?;
+        let logits = if repeat_penalty == 1. {
+            logits
+        } else {
+            let start_at = all_tokens.len().saturating_sub(repeat_last_n);
+            candle_transformers::utils::apply_repeat_penalty(
+                &logits,
+                repeat_penalty,
+                &all_tokens[start_at..],
+            )?
+        };
+        next_token = logits_processor.sample(&logits)?;
+        all_tokens.push(next_token);
+        print_token(next_token, &tokenizer);
+        if next_token == eos_token {
+            break;
+        };
+    } 
+
+    let dt = start_post_prompt.elapsed();
+    println!(
+        "\n\n{:4} prompt tokens processed: {:.2} token/s",
+        prompt_tokens.len(),
+        prompt_tokens.len() as f64 / prompt_dt.as_secs_f64(),
+    );
+
+    println!(
+        "{:4} tokens generated: {:.2} token/s",
+        to_sample,
+        to_sample as f64 / dt.as_secs_f64(),
+    );
+
 
     Ok(())
 }
