@@ -13,7 +13,7 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     let prompt: Option<String> = None;
 
     // The length of the sample to generate (in tokens).
-    let sample_len: usize = 800;
+    let sample_len: usize = 200;
 
     // The temperature used to generate samples, use 0 for greedy sampling.
     let temperature: f64 = 0.8;
@@ -38,13 +38,17 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         Some(temperature)
     };
-    
+
+    // /Users/pberck/.cache/huggingface//hub/models--TheBloke--Mistral-7B-Instruct-v0.2-GGUF
+    // /Users/pberck/.cache/huggingface//hub/models--TheBloke--Mistral-7B-Instruct-v0.1-GGUF
+
     //let repo = "TheBloke/Mistral-7B-v0.1-GGUF";
     let repo = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF"; // 0.1, 0.2
 
     // See list on https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF
    
-    let filename = "mistral-7b-instruct-v0.1.Q4_K_M.gguf"; // _S _M
+    let filename = "mistral-7b-instruct-v0.1.Q4_K_M.gguf";
+    //let filename = "mistral-7b-instruct-v0.1.Q4_K_S.gguf";
     //let filename = "mistral-7b-instruct-v0.1.Q2_K.gguf"; // 0.1, 0.2
 
     let api = hf_hub::api::sync::Api::new()?;
@@ -77,11 +81,11 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     println!("model built");
     println!("model::MAX_SEQ_LEN {}", model::MAX_SEQ_LEN);
     
-    let api = hf_hub::api::sync::Api::new().expect("api");
+    let api = hf_hub::api::sync::Api::new().expect("api?");
     let repo = "mistralai/Mistral-7B-v0.1";
     let api = api.model(repo.to_string());
 
-    let tokenizer_path = api.get("tokenizer.json").expect("tokeniser");
+    let tokenizer_path = api.get("tokenizer.json").expect("tokeniser?");
     println!("{:?}", tokenizer_path);
     let tokenizer = Tokenizer::from_file(tokenizer_path)
         .map_err(|e| format!("Error loading tokenizer: {e}"))?;
