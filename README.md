@@ -3,6 +3,7 @@
 ## Notes
 
  - Needs a HF token!
+ - Code needs cleaning/improving.
 
 ## Ubuntu
 
