@@ -3,6 +3,14 @@
 ## Notes
 
  - Needs a HF token!
+
+## Ubuntu
+
+To compile on Ubuntu, we need to set the path to CUDA libs and nvcc (this works for on Ubuntu 22.04):
+```
+export PATH=$PATH:/usr/lib/gcc/x86_64-linux-gnu/11/
+export PATH=$PATH:/usr/local/cuda-12.2/bin/
+```
  
 ## A text about water (from wikipedia).
 
