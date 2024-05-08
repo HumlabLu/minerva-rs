@@ -8,11 +8,11 @@ use candle_transformers::generation::LogitsProcessor;
 use candle_transformers::models::quantized_llama as model;
 use model::ModelWeights;
 
+use anyhow::{Error as E, Result};
+
 use crate::textgen::device;
 
-pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
-    // The prompt. If None, then, will be an iteractive chat.
-    let prompt: Option<String> = None;
+pub fn run_main(prompt: &str) -> Result<String> {
 
     // The length of the sample to generate (in tokens).
     let sample_len: usize = 200;
@@ -90,39 +90,19 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
 
     let tokenizer_path = api.get("tokenizer.json").expect("tokeniser?");
     println!("{:?}", tokenizer_path);
-    let tokenizer = Tokenizer::from_file(tokenizer_path)
-        .map_err(|e| format!("Error loading tokenizer: {e}"))?;
+    let tokenizer = Tokenizer::from_file(tokenizer_path).map_err(E::msg)?;
     
     let mut pre_prompt_tokens = vec![];
     //let prompt = Some("What is light?".to_string()); // PJB
-    let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. They live in Rörums Holma. We refers to Peter and Elisabet.}]".to_string());
+    //let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. They live in Rörums Holma. We refers to Peter and Elisabet.}]".to_string());
     //let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius?".to_string());
     //let prompt = Some("Write a story.".to_string());
+
+    let mut response = String::new();
     
-    let prompt_str = {
-        let prompt = if let Some(ref prompt) = prompt {
-            prompt.to_owned()
-        } else {
-            print!("> ");
-            std::io::stdout().flush()?;
-            let mut prompt = String::new();
-            std::io::stdin().read_line(&mut prompt)?;
-            if prompt.ends_with('\n') {
-                prompt.pop();
-                if prompt.ends_with('\r') {
-                    prompt.pop();
-                }
-            }
-            prompt
-        };
-
-        format!("[INST] {prompt} [/INST]")
-    };
-
-    println!("{}", &prompt_str);
-    let tokens = tokenizer
-        .encode(prompt_str, true)
-        .map_err(|e| format!("Error encoding tokenizer: {e}"))?;
+    let prompt = format!("[INST] {prompt} [/INST]");
+    println!("{}", &prompt);
+    let tokens = tokenizer.encode(prompt, true).map_err(E::msg)?;
         
     if verbose_prompt {
         for (token, id) in tokens.get_tokens().iter().zip(tokens.get_ids().iter()) {
@@ -196,7 +176,7 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
 
-    Ok(())
+    Ok(response.trim().to_string())
 }
 
 
