@@ -107,7 +107,8 @@ Size of collection 8.
 ## Minerva
 
 ```shell
-Asking Who was Minerva? Reference Roman mythology.
+cargo run -q --release -- -q "Who was Minerva? Reference Roman mythology." -k0
+
   74 prompt tokens processed: 16.50 token/s
   72 tokens generated: 10.87 token/s
 TimeDelta { secs: 12, nanos: 473691000 }
