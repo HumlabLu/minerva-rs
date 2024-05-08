@@ -103,3 +103,13 @@ Size of collection 8.
     2 | Text("2. **Universal Solvent**: Due to its polarity, water is known as the \"universal solvent\" because it can dissolve more substances than any other liquid. This property is crucial for the biochemical processes of living organisms.\n\n3. **Density and Ice Formation**: Uniquely, water expands and becomes less dense as it freezes. Ice has a lower density than liquid water, which is why ice floats. This anomaly is vital for aquatic life in cold climates, as the ice layer insulates the water below and maintains a habitable environment.")
     1 | Text("1. **Chemical Structure and Polarity**: Water (H2O) has a simple molecular structure consisting of two hydrogen atoms bonded to one oxygen atom. This arrangement gives water a polar nature, with a partial positive charge near the hydrogen atoms and a partial negative charge near the oxygen, enabling it to dissolve many substances.")
 ```
+
+## Minerva
+
+```shell
+Asking Who was Minerva? Reference Roman mythology.
+  74 prompt tokens processed: 16.50 token/s
+  72 tokens generated: 10.87 token/s
+TimeDelta { secs: 12, nanos: 473691000 }
+"Minerva was the goddess of wisdom, warfare, strategy, and crafts in Roman mythology. She is often portrayed as a helmeted woman holding a spear and shield in one hand and a spindle in the other. She was also known for her ability to grant wisdom and strategic planning to those who needed it most."
+```
