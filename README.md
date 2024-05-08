@@ -1,3 +1,9 @@
+# Minerva
+
+## Notes
+
+ - Needs a HF token!
+ 
 ## A text about water (from wikipedia).
 
 ```shell
