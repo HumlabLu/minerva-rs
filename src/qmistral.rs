@@ -15,7 +15,7 @@ use crate::textgen::device;
 pub fn run_qmistral(prompt: &str) -> Result<String> {
 
     // The length of the sample to generate (in tokens).
-    let sample_len: usize = 200;
+    let sample_len: usize = 1200;
 
     // The temperature used to generate samples, use 0 for greedy sampling.
     let temperature: f64 = 0.8;

@@ -152,6 +152,9 @@ fn main() -> anyhow::Result<()> {
 
         let mut string_context = vec![];
         let mut context_str = String::new();
+        if result.len() == 0 {
+            context_str = "Use any knowledge you have.".to_string();
+        }
         for res in result {
             //println!("{:?}", res);
             let md = match res.data {
