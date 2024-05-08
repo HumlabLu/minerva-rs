@@ -93,11 +93,6 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
     let tokenizer = Tokenizer::from_file(tokenizer_path).map_err(E::msg)?;
     
     let mut pre_prompt_tokens = vec![];
-    //let prompt = Some("What is light?".to_string()); // PJB
-    //let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. They live in Rörums Holma. We refers to Peter and Elisabet.}]".to_string());
-    //let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius?".to_string());
-    //let prompt = Some("Write a story.".to_string());
-
     let mut response = String::new();
     
     let prompt = format!("[INST] {prompt} [/INST]");
@@ -185,11 +180,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
     Ok(response.trim().to_string())
 }
 
-
 fn print_token(next_token: u32, tokenizer: &Tokenizer) {
-    // Extracting the last token as a string is complicated, here we just apply some simple
-    // heuristics as it seems to work well enough for this example. See the following for more
-    // details:
     // https://github.com/huggingface/tokenizers/issues/1141#issuecomment-1562644141
     if let Some(text) = tokenizer.id_to_token(next_token) {
         let text = text.replace('▁', " ");

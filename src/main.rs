@@ -66,12 +66,7 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
     dbg!("{:?}", &args);
-    
-    //test_mistral();
-    //let a = run_qmistral("Write a story.");
-    //let a = run_qmistral("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. They live in Rörums Holma. We refers to Peter and Elisabet.}]");
-    //println!("{}", a.unwrap().trim().to_string());
-    
+        
     // This is the saved DB, containing different collections.
     let mut db = get_db();
     let mut collection = db.get_collection(&args.collection).unwrap_or_else(|_| {
