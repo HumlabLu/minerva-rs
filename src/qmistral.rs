@@ -12,7 +12,7 @@ use anyhow::{Error as E, Result};
 
 use crate::textgen::device;
 
-pub fn run_main(prompt: &str) -> Result<String> {
+pub fn run_qmistral(prompt: &str) -> Result<String> {
 
     // The length of the sample to generate (in tokens).
     let sample_len: usize = 200;
@@ -41,8 +41,8 @@ pub fn run_main(prompt: &str) -> Result<String> {
         Some(temperature)
     };
 
-    // /Users/pberck/.cache/huggingface//hub/models--TheBloke--Mistral-7B-Instruct-v0.2-GGUF
-    // /Users/pberck/.cache/huggingface//hub/models--TheBloke--Mistral-7B-Instruct-v0.1-GGUF
+    // /Users/pberck/.cache/huggingface/hub/models--TheBloke--Mistral-7B-Instruct-v0.2-GGUF
+    // /Users/pberck/.cache/huggingface/hub/models--TheBloke--Mistral-7B-Instruct-v0.1-GGUF
 
     //let repo = "TheBloke/Mistral-7B-v0.1-GGUF";
     let repo = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF"; // 0.1, 0.2
@@ -135,7 +135,10 @@ pub fn run_main(prompt: &str) -> Result<String> {
 
     let prompt_dt = start_prompt_processing.elapsed();
     all_tokens.push(next_token);
-    print_token(next_token, &tokenizer);
+    //print_token(next_token, &tokenizer); // PJB if verbose?
+    if let Some(token) = get_token(next_token, &tokenizer)  {
+        response += &token; // first character
+    }
 
     let eos_token = *tokenizer.get_vocab(true).get("</s>").unwrap();
 
@@ -156,10 +159,13 @@ pub fn run_main(prompt: &str) -> Result<String> {
         };
         next_token = logits_processor.sample(&logits)?;
         all_tokens.push(next_token);
-        print_token(next_token, &tokenizer);
+        //print_token(next_token, &tokenizer); // PJB if verbose?
         if next_token == eos_token {
             break;
         };
+        if let Some(token) = get_token(next_token, &tokenizer)  {
+            response += &token;
+        }
     } 
 
     let dt = start_post_prompt.elapsed();
@@ -171,8 +177,8 @@ pub fn run_main(prompt: &str) -> Result<String> {
 
     println!(
         "{:4} tokens generated: {:.2} token/s",
-        to_sample,
-        to_sample as f64 / dt.as_secs_f64(),
+        all_tokens.len(),
+        all_tokens.len()  as f64 / dt.as_secs_f64(),
     );
 
 
@@ -187,12 +193,13 @@ fn print_token(next_token: u32, tokenizer: &Tokenizer) {
     // https://github.com/huggingface/tokenizers/issues/1141#issuecomment-1562644141
     if let Some(text) = tokenizer.id_to_token(next_token) {
         let text = text.replace('▁', " ");
-        let ascii = text
+        // Convert to ascii
+        let ascii = text // ascii: Option<u8>, text:String
             .strip_prefix("<0x")
             .and_then(|t| t.strip_suffix('>'))
             .and_then(|t| u8::from_str_radix(t, 16).ok());
         match ascii {
-            None => print!("{text}"),
+            None => print!("{text}"), // ok, use string anyway
             Some(ascii) => {
                 if let Some(chr) = char::from_u32(ascii as u32) {
                     if chr.is_ascii() {
@@ -202,6 +209,29 @@ fn print_token(next_token: u32, tokenizer: &Tokenizer) {
             }
         }
         let _ = std::io::stdout().flush();
+    }
+}
+
+fn get_token(next_token: u32, tokenizer: &Tokenizer) -> Option<String> {
+    if let Some(text) = tokenizer.id_to_token(next_token) {
+        let text = text.replace('▁', " ");
+        let ascii = text
+            .strip_prefix("<0x")
+            .and_then(|t| t.strip_suffix('>'))
+            .and_then(|t| u8::from_str_radix(t, 16).ok());
+        match ascii {
+            None => Some(text), // return string directly
+            Some(ascii) => {
+                if let Some(chr) = char::from_u32(ascii as u32) {
+                    if chr.is_ascii() {
+                        return Some(chr.to_string());
+                    }
+                }
+                None
+            }
+        }
+    } else {
+        None
     }
 }
 

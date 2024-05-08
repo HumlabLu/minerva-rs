@@ -10,7 +10,7 @@ use std::path::Path;
 mod mistral;
 use mistral::test_mistral;
 mod qmistral;
-use qmistral::run_main;
+use qmistral::run_qmistral;
 
 // =====================================================================
 // Command line arguments.
@@ -68,7 +68,9 @@ fn main() -> anyhow::Result<()> {
     dbg!("{:?}", &args);
     
     //test_mistral();
-    let _ = run_main("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. They live in Rörums Holma. We refers to Peter and Elisabet.}]");
+    //let a = run_qmistral("Write a story.");
+    //let a = run_qmistral("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. They live in Rörums Holma. We refers to Peter and Elisabet.}]");
+    //println!("{}", a.unwrap().trim().to_string());
     
     // This is the saved DB, containing different collections.
     let mut db = get_db();
@@ -149,6 +151,7 @@ fn main() -> anyhow::Result<()> {
         let result = collection.search(&embedded_query, args.knearest).unwrap();
 
         let mut string_context = vec![];
+        let mut context_str = String::new();
         for res in result {
             //println!("{:?}", res);
             let md = match res.data {
@@ -158,9 +161,21 @@ fn main() -> anyhow::Result<()> {
             let (id, distance) = (res.id, res.distance);
             //println!("{distance:.5} | ID: {id} {md}"); // Use verbosity
             string_context.push(md.clone());
+            context_str += &md;
         }
+
+        /*
         let ts_start = chrono::Local::now();
         let ans = generate_answer(&query, &string_context);
+        let ts_end = chrono::Local::now();
+        println!("{:?}", ts_end - ts_start);
+        println!("{:?}", ans.unwrap().trim().to_string());
+         */
+        // ---
+        
+        let ts_start = chrono::Local::now();
+        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not repeat the question or references. Today is {date}. Context: {context}. Question: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+        let ans = run_qmistral(&q);
         let ts_end = chrono::Local::now();
         println!("{:?}", ts_end - ts_start);
         println!("{:?}", ans.unwrap().trim().to_string());
