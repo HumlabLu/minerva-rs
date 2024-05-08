@@ -3,27 +3,6 @@
 ## Notes
 
  - Needs a HF token!
-
-## Ubuntu or Mac
-
-To compile with CUDA, replace the candle crates with the ones with the cuda features.
-```
-candle-core = { git = "https://github.com/huggingface/candle", branch = "main" }
-candle-transformers = { git = "https://github.com/huggingface/candle", branch = "main" }
-candle-nn = { git = "https://github.com/huggingface/candle", branch = "main" }
-
-candle-core = { git = "https://github.com/huggingface/candle", branch = "main", features = ["cuda"]}
-candle-transformers = { git = "https://github.com/huggingface/candle", branch = "main", features = ["cuda
-"]}
-candle-nn = { git = "https://github.com/huggingface/candle", branch = "main", features = ["cuda"]}
-```
-On Apple, use the lines without the cuda features.
-
-Path till CUDA libs and nvcc (this works for on Ubuntu 22.04):
-```
-export PATH=$PATH:/usr/lib/gcc/x86_64-linux-gnu/11/
-export PATH=$PATH:/usr/local/cuda-12.2/bin/
-```
  
 ## A text about water (from wikipedia).
 
