@@ -91,6 +91,7 @@ pub fn load_model() -> Result<(QMixFormer, Tokenizer)> {
     Ok((model, tokenizer))
 }
 
+#[allow(dead_code)]
 struct TextGeneration {
     model: QMixFormer,
     device: Device,
@@ -194,6 +195,7 @@ impl TextGeneration {
 
 
 // Use the retrieved text as context.
+#[allow(dead_code)]
 pub fn generate_answer(query: &str, references: &Vec<String>) -> Result<String> {
 
     let mut context = Vec::new(); // :Vec<String>

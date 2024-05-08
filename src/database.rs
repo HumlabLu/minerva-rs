@@ -25,18 +25,18 @@ pub fn data_to_record(emb: &Embedding, txt: &str) -> Record {
 
 pub fn get_db() -> Database {
     //let args = Args::parse(); // Should not be here, have function args instead.
-    let mut db = Database::open("data/test").unwrap();
+    let db = Database::open("data/test").unwrap();
     // let collection = db.get_collection("vectors").unwrap();
     println!("DB contains {} collections.", db.len());
     db
 }
 
-pub fn save_db(db: &mut Database) {
+pub fn _save_db(db: &mut Database) {
     let collection = db.get_collection("vectors").unwrap();
     db.save_collection("vectors", &collection).unwrap();
 }
 
-pub fn delete_collection(db: &mut Database, name: &str) {
+pub fn _delete_collection(db: &mut Database, name: &str) {
     let _ = db.delete_collection(name);
 }
 

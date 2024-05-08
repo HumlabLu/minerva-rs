@@ -5,10 +5,7 @@ use database::{get_db, data_to_record};
 mod embedder;
 use embedder::{chunk_string, embed_file_txt, embed_file_pdf, embeddings};
 mod textgen;
-use textgen::{generate_answer};
 use std::path::Path;
-mod mistral;
-use mistral::test_mistral;
 mod qmistral;
 use qmistral::run_qmistral;
 
@@ -156,7 +153,7 @@ fn main() -> anyhow::Result<()> {
                 Metadata::Text(value) => value,
                 _ => "Data is not text.".to_string()
             };
-            let (id, distance) = (res.id, res.distance);
+            //let (id, distance) = (res.id, res.distance);
             //println!("{distance:.5} | ID: {id} {md}"); // Use verbosity
             string_context.push(md.clone());
             context_str += &md;

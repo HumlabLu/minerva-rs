@@ -2,7 +2,7 @@ use std::io::Write;
 use tokenizers::Tokenizer;
 
 use candle_core::quantized::gguf_file;
-use candle_core::{Device, Tensor};
+use candle_core::{Tensor};
 use candle_transformers::generation::LogitsProcessor;
 
 use candle_transformers::models::quantized_llama as model;
@@ -92,7 +92,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
     println!("{:?}", tokenizer_path);
     let tokenizer = Tokenizer::from_file(tokenizer_path).map_err(E::msg)?;
     
-    let mut pre_prompt_tokens = vec![];
+    let pre_prompt_tokens = vec![]; // PJB remove
     let mut response = String::new();
     
     let prompt = format!("[INST] {prompt} [/INST]");
@@ -180,6 +180,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
     Ok(response.trim().to_string())
 }
 
+#[allow(dead_code)]
 fn print_token(next_token: u32, tokenizer: &Tokenizer) {
     // https://github.com/huggingface/tokenizers/issues/1141#issuecomment-1562644141
     if let Some(text) = tokenizer.id_to_token(next_token) {

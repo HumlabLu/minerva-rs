@@ -3,7 +3,6 @@ use fastembed::{TextEmbedding, InitOptions, EmbeddingModel, Embedding};
 use text_splitter::{TextSplitter};
 use std::path::PathBuf;
 use std::fs::read_dir;
-use anyhow::Context;
 use std::path::Path;
 
 // Chunk blindly into parts.
@@ -150,6 +149,7 @@ pub fn chunk_string(text: &str, max_len: usize) -> Vec<String> {
 }
 
 // Return a vector with filenames with correct extension.
+#[allow(dead_code)]
 pub fn read_dir_contents<P: AsRef<Path>>(path: P) -> anyhow::Result<Vec<PathBuf>> {
     // Read the directory
     let mut file_paths = Vec::new();
@@ -159,10 +159,8 @@ pub fn read_dir_contents<P: AsRef<Path>>(path: P) -> anyhow::Result<Vec<PathBuf>
         let path = entry.path();
         if path.is_file() {
             if let Some(ext) = path.extension() {
-                if let Some(pfn) = path.file_name().expect("Invalid filename?").to_str() {
-                    if ext == "xml" || ext == "txt" {
-                        file_paths.push(path);
-                    }
+                if ext == "xml" || ext == "txt" {
+                    file_paths.push(path);
                 }
             }
         } else if path.is_dir() { // Meander down into sub-directories.
@@ -182,7 +180,7 @@ pub fn embed_file_txt(path: &str, chunk_size: usize) -> anyhow::Result<Vec<Strin
 }
 
 pub fn embed_file_pdf(path: &str, chunk_size: usize) -> anyhow::Result<Vec<String>> {
-    let bytes = std::fs::read(path.clone()).unwrap();
+    let bytes = std::fs::read(path).unwrap();
     let out = pdf_extract::extract_text_from_mem(&bytes).unwrap();
     Ok(chunk_string(&out, chunk_size))
 }
