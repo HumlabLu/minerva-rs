@@ -173,7 +173,7 @@ fn main() -> anyhow::Result<()> {
         let ans = run_qmistral(&q);
         let ts_end = chrono::Local::now();
         println!("{:?}", ts_end - ts_start);
-        println!("{:?}", ans.unwrap().trim().to_string());
+        println!("\n{}", ans.unwrap().trim().to_string());
     }
 
     Ok(())
