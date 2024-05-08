@@ -8,6 +8,8 @@ use candle_transformers::generation::LogitsProcessor;
 use candle_transformers::models::quantized_llama as model;
 use model::ModelWeights;
 
+use crate::textgen::device;
+
 pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     // The prompt. If None, then, will be an iteractive chat.
     let prompt: Option<String> = None;
@@ -57,8 +59,9 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut file = std::fs::File::open(model_path)?;
     let start = std::time::Instant::now();
-    let device = Device::Cpu;
-
+    let device = device(false)?; //Device::Cpu;
+    println!("Device {:?}", device);
+    
     let mut model = {
         let model = gguf_file::Content::read(&mut file)?;
         let mut total_size_in_bytes = 0;
@@ -92,7 +95,7 @@ pub fn run_main() -> Result<(), Box<dyn std::error::Error>> {
     
     let mut pre_prompt_tokens = vec![];
     //let prompt = Some("What is light?".to_string()); // PJB
-    let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. We is Peter and Elisabet. They live in Rörums Holma. We refers to Peter and Elisabet.}]".to_string());
+    let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius? References: [{context:We have a cat called Sirius. We have another cat called Maja. They live in Rörums Holma. We refers to Peter and Elisabet.}]".to_string());
     //let prompt = Some("You are a friendly and helpful AI assistant. Your answer should be concise and to the point and use the context in the references. Do not repeat the question or references. Today is Tuesday, May  7, 2024. Question: Who are Maja and Sirius?".to_string());
     //let prompt = Some("Write a story.".to_string());
     
