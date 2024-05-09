@@ -13,12 +13,6 @@ export PATH=$PATH:/usr/lib/gcc/x86_64-linux-gnu/11/
 export PATH=$PATH:/usr/local/cuda-12.2/bin/
 ```
  
-## A text about water (from wikipedia).
-
-```shell
-cargo run --release -- -f texts/water.txt
-```
-
 ## Ask a question.
 
 ```shell
@@ -53,6 +47,13 @@ TimeDelta { secs: 20, nanos: 721854000 }
 
 Sirius is the brightest star in the night sky, and it's part of the constellation Canis Major (The Greater Dog). You can locate it by finding the constellation Orion (identified by its distinctive "Square of Orion" asterism), then drawing a line from Betelgeuse, one of Orion's shoulders, to Bellatrix, another star in Orion. Sirius is located roughly where that line intersects with the Milky Way. Keep in mind that visibility of stars depends on various factors such as location, weather conditions, and time of year.
 ```
+
+## Add a text.
+
+```shell
+cargo run --release -- -f texts/water.txt
+```
+
 
 ```shell
 cargo run -q --release -- -q "Write one sentence about water"
