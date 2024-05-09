@@ -45,11 +45,11 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
     // /Users/pberck/.cache/huggingface/hub/models--TheBloke--Mistral-7B-Instruct-v0.1-GGUF
 
     //let repo = "TheBloke/Mistral-7B-v0.1-GGUF";
-    let repo = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF"; // 0.1, 0.2
+    let repo = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"; // 0.1, 0.2
 
     // See list on https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF
    
-    let filename = "mistral-7b-instruct-v0.1.Q5_K_M.gguf"; // Twice as slow as Q4_K_M
+    let filename = "mistral-7b-instruct-v0.2.Q5_K_M.gguf"; // Twice as slow as Q4_K_M
     println!("Model file {}", filename);
     //let filename = "mistral-7b-instruct-v0.1.Q4_K_S.gguf";
     //let filename = "mistral-7b-instruct-v0.1.Q2_K.gguf"; // 0.1, 0.2
