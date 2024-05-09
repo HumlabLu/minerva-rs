@@ -62,7 +62,7 @@ pub enum Commands {
 fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
-    dbg!("{:?}", &args);
+    println!("{:?}", &args);
         
     // This is the saved DB, containing different collections.
     let mut db = get_db();
@@ -116,7 +116,7 @@ fn main() -> anyhow::Result<()> {
     }
     println!("Size of collection {}.", collection.len());
     
-    // Shouldn't really mix --paraeters and commands...
+    // Shouldn't really mix --parameters and commands...
     match args.command {
         Some(Commands::List { }) => {
             let list = collection.list().unwrap();
