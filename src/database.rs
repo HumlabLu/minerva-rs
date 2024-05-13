@@ -20,9 +20,11 @@ let record = Record::new(&v, &m0);
 /// Takes an embedding (for a chunk) and the chunk text.
 pub fn data_to_record(emb: &Embedding, filename: &str, txt: &str) -> Record {
     let vector = Vector((emb).to_vec());
+    let md_date = Metadata::Text(chrono::Local::now().format("%Y%m%dT%H%M").to_string());
     let md_text = Metadata::Text(txt.to_string());
     let md_file = Metadata::Text(filename.to_string());
     let hm = HashMap::from([
+        ("date".to_string(), md_date),
         ("text".to_string(), md_text),
         ("filename".to_string(), md_file)
     ]);

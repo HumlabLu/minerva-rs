@@ -140,6 +140,9 @@ fn main() -> anyhow::Result<()> {
                 println!("{:5} | {:?}", id.0, item.data); // data = Metadata
                 let hm = md_to_hashmap(&item.data).unwrap();
                 println!("{:?}", md_to_str(
+                    hm.get("date").unwrap()
+                ).unwrap());
+                println!("{:?}", md_to_str(
                     hm.get("filename").unwrap()
                 ).unwrap());
                 println!("{:?}", md_to_str(
@@ -170,11 +173,13 @@ fn main() -> anyhow::Result<()> {
         if result.len() == 0 {
             context_str = "Use any knowledge you have.".to_string();
         }
+        let mut sep = "";
         for res in result {
             let hm = md_to_hashmap(&res.data).unwrap();
             let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
             let text = md_to_str(hm.get("text").unwrap()).unwrap();
-            context_str += &("(document:".to_owned() + &filename + ", with contents:" + &text + ")");
+            context_str += &(sep.to_owned() + "(document:" + &filename + ", with contents:" + &text + ")");
+            sep = ", ";
         }
 /*
         for res in result {
