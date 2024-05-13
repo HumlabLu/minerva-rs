@@ -205,6 +205,7 @@ fn main() -> anyhow::Result<()> {
         
         let ts_start = chrono::Local::now();
         let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Print the name of document used from the context. Do not repeat the question or references. Today is {date}. Context: {context}. Question: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+        //let q = format!("{question}", question=query);
         let ans = run_qmistral(&q);
         let ts_end = chrono::Local::now();
         println!("{:?}", ts_end - ts_start);

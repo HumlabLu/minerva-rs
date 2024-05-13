@@ -9,6 +9,8 @@ use candle_transformers::models::quantized_llama as model;
 use model::ModelWeights;
 
 use anyhow::{Error as E, Result};
+use tqdm::tqdm;
+use tqdm::pbar;
 
 use crate::textgen::device;
 
@@ -50,14 +52,15 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
     // See list on https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF
    
     let filename = "mistral-7b-instruct-v0.2.Q5_K_M.gguf"; // Twice as slow as Q4_K_M
+    //let filename = "mistral-7b-instruct-v0.2.Q6_K.gguf"; // Twice as slow as Q4_K_M
     println!("Model file {}", filename);
     //let filename = "mistral-7b-instruct-v0.1.Q4_K_S.gguf";
     //let filename = "mistral-7b-instruct-v0.1.Q2_K.gguf"; // 0.1, 0.2
-
+    
     let api = hf_hub::api::sync::Api::new()?;
     let api = api.model(repo.to_string());
     let model_path = api.get(filename)?;
-
+    
     let mut file = std::fs::File::open(model_path)?;
     let start = std::time::Instant::now();
     let device = device(false)?; //Device::Cpu;
@@ -97,8 +100,11 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
     let mut response = String::new();
     
     let prompt = format!("[INST] {prompt} [/INST]");
+    //let prompt = format!("{prompt}");
     println!("{}", &prompt);
+    
     let tokens = tokenizer.encode(prompt, true).map_err(E::msg)?;
+    println!("Prompt length {}", tokens.len());
         
     if verbose_prompt {
         for (token, id) in tokens.get_tokens().iter().zip(tokens.get_ids().iter()) {
@@ -109,6 +115,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
 
     let prompt_tokens = [&pre_prompt_tokens, tokens.get_ids()].concat();
     let to_sample = sample_len.saturating_sub(1);
+
     let prompt_tokens = if prompt_tokens.len() + to_sample > model::MAX_SEQ_LEN - 10 {
         let to_remove = prompt_tokens.len() + to_sample + 10 - model::MAX_SEQ_LEN;
         prompt_tokens[prompt_tokens.len().saturating_sub(to_remove)..]
@@ -128,7 +135,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
         let logits = logits.squeeze(0)?;
         logits_processor.sample(&logits)?
     };
-
+    
     let prompt_dt = start_prompt_processing.elapsed();
     all_tokens.push(next_token);
     //print_token(next_token, &tokenizer); // PJB if verbose?
@@ -139,6 +146,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
     let eos_token = *tokenizer.get_vocab(true).get("</s>").unwrap();
 
     let start_post_prompt = std::time::Instant::now();
+    let mut pbar = pbar(Some(to_sample));
     for index in 0..to_sample {
         let input = Tensor::new(&[next_token], &device)?.unsqueeze(0)?;
         let logits = model.forward(&input, prompt_tokens.len() + index)?;
@@ -155,12 +163,14 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
         };
         next_token = logits_processor.sample(&logits)?;
         all_tokens.push(next_token);
+        
         //print_token(next_token, &tokenizer); // PJB if verbose?
         if next_token == eos_token {
             break;
         };
         if let Some(token) = get_token(next_token, &tokenizer)  {
             response += &token;
+            pbar.update(1).unwrap();
         }
     } 
 
