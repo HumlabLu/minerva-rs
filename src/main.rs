@@ -137,18 +137,15 @@ fn main() -> anyhow::Result<()> {
         Some(Commands::List { }) => {
             let list = collection.list().unwrap();
             for (id, item) in list {
-                println!("{:5} | {:?}", id.0, item.data); // data = Metadata
+                //println!("{:5} | {:?}", id.0, item.data); // data = Metadata
                 let hm = md_to_hashmap(&item.data).unwrap();
-                println!("{:?}/{:?}/{:?}", md_to_str(
-                    hm.get("ulid").unwrap()
-                ).unwrap(),
-                md_to_str(
-                    hm.get("date").unwrap()
-                ).unwrap(),
-                md_to_str(
-                    hm.get("filename").unwrap()
-                ).unwrap());
-                println!("{:?}", md_to_str(
+                println!("{:5}/{:?}/{:?}/{:?}",
+                    id.0,
+                    md_to_str(hm.get("ulid").unwrap()).unwrap(),
+                    md_to_str(hm.get("date").unwrap()).unwrap(),
+                    md_to_str(hm.get("filename").unwrap()).unwrap()
+                );
+                println!("{:?}\n", md_to_str(
                     hm.get("text").unwrap()
                 ).unwrap());
             }
@@ -207,7 +204,7 @@ fn main() -> anyhow::Result<()> {
         // ---
         
         let ts_start = chrono::Local::now();
-        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not repeat the question or references. Today is {date}. Context: {context}. Question: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Print the name of document used from the context. Do not repeat the question or references. Today is {date}. Context: {context}. Question: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
         let ans = run_qmistral(&q);
         let ts_end = chrono::Local::now();
         println!("{:?}", ts_end - ts_start);
