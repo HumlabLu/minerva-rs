@@ -139,10 +139,13 @@ fn main() -> anyhow::Result<()> {
             for (id, item) in list {
                 println!("{:5} | {:?}", id.0, item.data); // data = Metadata
                 let hm = md_to_hashmap(&item.data).unwrap();
-                println!("{:?}", md_to_str(
+                println!("{:?}/{:?}/{:?}", md_to_str(
+                    hm.get("ulid").unwrap()
+                ).unwrap(),
+                md_to_str(
                     hm.get("date").unwrap()
-                ).unwrap());
-                println!("{:?}", md_to_str(
+                ).unwrap(),
+                md_to_str(
                     hm.get("filename").unwrap()
                 ).unwrap());
                 println!("{:?}", md_to_str(
