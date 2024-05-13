@@ -8,6 +8,7 @@ mod textgen;
 use std::path::Path;
 mod qmistral;
 use qmistral::run_qmistral;
+use std::collections::HashMap;
 
 // =====================================================================
 // Command line arguments.
@@ -58,6 +59,21 @@ pub enum Commands {
 // =====================================================================
 // Main.
 // =====================================================================
+// Function to convert Metadata of type Object back into a HashMap
+
+fn md_to_hashmap(metadata: &Metadata) -> Option<HashMap<String, Metadata>> {
+    match metadata {
+        Metadata::Object(hm) => Some(hm.clone()),
+        _ => None
+    }
+}
+
+fn md_to_str(metadata: &Metadata) -> Option<String> {
+    match metadata {
+        Metadata::Text(txt) => Some(txt.to_string()),
+        _ => None,
+    }
+}
 
 fn main() -> anyhow::Result<()> {
 
@@ -101,7 +117,7 @@ fn main() -> anyhow::Result<()> {
             let mut records = vec![];
             for (chunk, vector) in data.iter().zip(vectors.iter()) {
                 // With custom InitOptions
-                let record = data_to_record(vector, chunk);
+                let record = data_to_record(vector, filename, chunk);
                 //println!("Record {:?}", record);
                 records.push(record);
             }
@@ -122,6 +138,13 @@ fn main() -> anyhow::Result<()> {
             let list = collection.list().unwrap();
             for (id, item) in list {
                 println!("{:5} | {:?}", id.0, item.data); // data = Metadata
+                let hm = md_to_hashmap(&item.data).unwrap();
+                println!("{:?}", md_to_str(
+                    hm.get("filename").unwrap()
+                ).unwrap());
+                println!("{:?}", md_to_str(
+                    hm.get("text").unwrap()
+                ).unwrap());
             }
         },
         Some(Commands::Del { }) => {
@@ -142,11 +165,18 @@ fn main() -> anyhow::Result<()> {
         let embedded_query = Vector((&v).to_vec());
         let result = collection.search(&embedded_query, args.knearest).unwrap();
 
-        let mut string_context = vec![];
+        //let mut string_context = vec![];
         let mut context_str = String::new();
         if result.len() == 0 {
             context_str = "Use any knowledge you have.".to_string();
         }
+        for res in result {
+            let hm = md_to_hashmap(&res.data).unwrap();
+            let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
+            let text = md_to_str(hm.get("text").unwrap()).unwrap();
+            context_str += &("(document:".to_owned() + &filename + ", with contents:" + &text + ")");
+        }
+/*
         for res in result {
             //println!("{:?}", res);
             let md = match res.data {
@@ -157,7 +187,7 @@ fn main() -> anyhow::Result<()> {
             //println!("{distance:.5} | ID: {id} {md}"); // Use verbosity
             string_context.push(md.clone());
             context_str += &md;
-        }
+        }*/
 
         /*
         let ts_start = chrono::Local::now();

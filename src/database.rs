@@ -1,5 +1,6 @@
 use oasysdb::prelude::*;
 use fastembed::{Embedding};
+use std::collections::HashMap;
 
 /*
 In short, use Collection to store your vector records or search
@@ -17,9 +18,15 @@ let record = Record::new(&v, &m0);
 */
 
 /// Takes an embedding (for a chunk) and the chunk text.
-pub fn data_to_record(emb: &Embedding, txt: &str) -> Record {
+pub fn data_to_record(emb: &Embedding, filename: &str, txt: &str) -> Record {
     let vector = Vector((emb).to_vec());
-    let metadata = Metadata::Text((&txt).to_string());
+    let md_text = Metadata::Text(txt.to_string());
+    let md_file = Metadata::Text(filename.to_string());
+    let hm = HashMap::from([
+        ("text".to_string(), md_text),
+        ("filename".to_string(), md_file)
+    ]);
+    let metadata = Metadata::Object(hm);
     Record::new(&vector, &metadata)
 }
 
