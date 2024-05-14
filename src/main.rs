@@ -130,7 +130,7 @@ fn main() -> anyhow::Result<()> {
             let ids = collection.insert_many(&records).unwrap();
             println!("Added {:?} items", ids.len());
         } else {
-            println!("No items to add"));
+            println!("No items to add");
         }
         
         // And make it persistent.
