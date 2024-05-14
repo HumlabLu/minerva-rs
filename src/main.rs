@@ -117,7 +117,7 @@ fn main() -> anyhow::Result<()> {
             let mut records = vec![];
             for (chunk, vector) in data.iter().zip(vectors.iter()) {
                 // With custom InitOptions
-                let record = data_to_record(vector, filename, chunk);
+                let record = data_to_record(vector, filename, chunk); // Add chunk nr?
                 //println!("Record {:?}", record);
                 records.push(record);
             }
@@ -203,12 +203,13 @@ fn main() -> anyhow::Result<()> {
          */
         // ---
         
-        let ts_start = chrono::Local::now();
+        let _ts_start = chrono::Local::now();
         let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Print the name of document used from the context. Do not repeat the question or references. Today is {date}. Context: {context}. Question: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
         //let q = format!("{question}", question=query);
+        //let q = format!("Du är en vänlig och hjälpsam AI-assistent. Ditt svar ska vara kortfattat och använda sammanhanget om möjligt. Skriv ut namnet på det dokument som används från sammanhanget. Upprepa inte frågan eller referenserna. Svara på Svenska! Idag är det {date}. Sammanhang: {context}. Fråga: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
         let ans = run_qmistral(&q);
-        let ts_end = chrono::Local::now();
-        println!("{:?}", ts_end - ts_start);
+        let _ts_end = chrono::Local::now();
+        //println!("{:?}", ts_end - ts_start);
         println!("\n{}", ans.unwrap().trim().to_string());
     }
 

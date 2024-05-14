@@ -173,7 +173,6 @@ pub fn read_dir_contents<P: AsRef<Path>>(path: P) -> anyhow::Result<Vec<PathBuf>
     Ok(file_paths)   
 }
 
-
 pub fn embed_file_txt(path: &str, chunk_size: usize) -> anyhow::Result<Vec<String>> {
     let contents = fs::read_to_string(path)?;
     Ok(chunk_string(&contents, chunk_size))

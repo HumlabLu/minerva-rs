@@ -9,7 +9,6 @@ use candle_transformers::models::quantized_llama as model;
 use model::ModelWeights;
 
 use anyhow::{Error as E, Result};
-use tqdm::tqdm;
 use tqdm::pbar;
 
 use crate::textgen::device;
@@ -48,12 +47,15 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
 
     //let repo = "TheBloke/Mistral-7B-v0.1-GGUF";
     let repo = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"; // 0.1, 0.2
-
+    //let repo = "AI-Sweden-Models/gpt-sw3-6.7b-v2-instruct-gguf";
+    
     // See list on https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF
    
     let filename = "mistral-7b-instruct-v0.2.Q5_K_M.gguf"; // Twice as slow as Q4_K_M
+    //let filename = "gpt-sw3-6.7b-v2-instruct-Q4_K_M.gguf";
+    
     //let filename = "mistral-7b-instruct-v0.2.Q6_K.gguf"; // Twice as slow as Q4_K_M
-    println!("Model file {}", filename);
+    println!("Model {} | {}", repo, filename);
     //let filename = "mistral-7b-instruct-v0.1.Q4_K_S.gguf";
     //let filename = "mistral-7b-instruct-v0.1.Q2_K.gguf"; // 0.1, 0.2
     
@@ -69,6 +71,10 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
     let mut model = {
         let model = gguf_file::Content::read(&mut file)?;
         let mut total_size_in_bytes = 0;
+        /*for (k, v) in model.metadata.iter() {
+            // llama.attention.head_count = U32(32)
+            println!("{:?}", k);
+        }*/
         for (_, tensor) in model.tensor_infos.iter() {
             let elem_count = tensor.shape.elem_count();
             total_size_in_bytes += elem_count
@@ -82,6 +88,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
             &format_size(total_size_in_bytes),
             start.elapsed().as_secs_f32(),
         );
+        
         ModelWeights::from_gguf(model, &mut file, &device)?
     };
 
@@ -136,7 +143,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
         logits_processor.sample(&logits)?
     };
     
-    let prompt_dt = start_prompt_processing.elapsed();
+    let _prompt_dt = start_prompt_processing.elapsed();
     all_tokens.push(next_token);
     //print_token(next_token, &tokenizer); // PJB if verbose?
     if let Some(token) = get_token(next_token, &tokenizer)  {
@@ -145,7 +152,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
 
     let eos_token = *tokenizer.get_vocab(true).get("</s>").unwrap();
 
-    let start_post_prompt = std::time::Instant::now();
+    let _start_post_prompt = std::time::Instant::now();
     let mut pbar = pbar(Some(to_sample));
     for index in 0..to_sample {
         let input = Tensor::new(&[next_token], &device)?.unsqueeze(0)?;
@@ -174,6 +181,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
         }
     } 
 
+    /*
     let dt = start_post_prompt.elapsed();
     println!(
         "\n\n{:4} prompt tokens processed: {:.2} token/s",
@@ -186,7 +194,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
         all_tokens.len(),
         all_tokens.len()  as f64 / dt.as_secs_f64(),
     );
-
+    */
 
     Ok(response.trim().to_string())
 }
