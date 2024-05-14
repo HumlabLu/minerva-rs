@@ -108,14 +108,12 @@ fn main() -> anyhow::Result<()> {
     });
 
     if let Some(dirname) = &args.dirname {
-        let mut chunked_data: Option<Vec<String>> = None;
         let mut records = vec![];
         let filenames = read_dir_contents(dirname).unwrap();
         for filename in filenames {
             let filename_str = filename.clone().into_os_string().into_string().unwrap();
             print!("Reading {}", filename_str);
-
-            chunked_data = Some(embed_file_txt(filename, args.chunksize).expect("File does not exist?"));
+            let chunked_data: Option<Vec<String>> = Some(embed_file_txt(filename, args.chunksize).expect("File does not exist?"));
             
             if let Some(data) = chunked_data {
                 let vectors = embeddings(data.clone()).expect("Cannot create embeddings.");
