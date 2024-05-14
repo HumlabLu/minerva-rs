@@ -3,9 +3,9 @@ use clap::{Parser, Subcommand};
 mod database;
 use database::{get_db, data_to_record};
 mod embedder;
-use embedder::{chunk_string, embed_file_txt, embed_file_pdf, embeddings};
+use embedder::{chunk_string, embed_file_txt, embed_file_pdf, embeddings, read_dir_contents};
 mod textgen;
-use textgen::{load_model, generate_answer};
+//use textgen::{load_model, generate_answer};
 use std::path::Path;
 mod qmistral;
 use qmistral::run_qmistral;
@@ -31,6 +31,9 @@ struct Args {
     // Name of the database (collection)
     #[arg(long, default_value = "vectors", help = "Name of the database collection.")]
     pub collection: String,
+
+    #[arg(short, long, help = "Directory with text files.")]
+    pub dirname: Option<String>,
 
     // The k-nearest neighbours.
     #[clap(short, long, action, default_value_t = 2, help = "The k-nearest neighbours.")]
@@ -103,6 +106,32 @@ fn main() -> anyhow::Result<()> {
         */
         c
     });
+
+    if let Some(dirname) = &args.dirname {
+        let mut chunked_data: Option<Vec<String>> = None;
+        let mut records = vec![];
+        let filenames = read_dir_contents(dirname).unwrap();
+        for filename in filenames {
+            let filename_str = filename.clone().into_os_string().into_string().unwrap();
+            print!("Reading {}", filename_str);
+
+            chunked_data = Some(embed_file_txt(filename, args.chunksize).expect("File does not exist?"));
+            
+            if let Some(data) = chunked_data {
+                let vectors = embeddings(data.clone()).expect("Cannot create embeddings.");
+                for (chunk, vector) in data.iter().zip(vectors.iter()) {
+                    let record = data_to_record(vector, &filename_str, chunk); // Add chunk nr?
+                    records.push(record);
+                }
+                println!(", Items {}", data.len());
+            }
+        }
+        let ids = collection.insert_many(&records).unwrap();
+        println!("Added {:?} items", ids.len());
+        
+        // And make it persistent.
+        db.save_collection(&args.collection, &collection).unwrap();
+    }
     
     if let Some(filename) = &args.filename {
         let path = Path::new(filename);

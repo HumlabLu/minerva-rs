@@ -75,18 +75,26 @@ Assembling, training, and utilizing dolphins as your companions for transportati
 // mistral-7b-instruct-v0.2.Q4_K_M.gguf
 // zephyr-7b-beta.Q4_K_M.gguf
 // See also https://prest.blog/llm-mistral
+#[allow(dead_code)]
 pub fn load_model() -> Result<(QMixFormer, Tokenizer)> {
     let api = Api::new()?.repo(Repo::model(
         //"Demonthos/dolphin-2_6-phi-2-candle".to_string(),
         "AI-Sweden-Models/gpt-sw3-6.7b-v2-instruct-gguf".to_string(),
     ));
-    
-    let tokenizer_filename = api.get("tokenizer.json")?;
+
+    let tokenizer_filename = "spiece.model";
+    //let tokenizer_filename = api.get("tokenizer.json")?;
     //tokenizer = GPTSw3Tokenizer.from_pretrained("AI-Sweden-Models/gpt-sw3-126m")
 
     //let weights_filename = api.get("model-q4k.gguf")?; // for Demonthos
     let weights_filename = api.get("gpt-sw3-6.7b-v2-instruct-Q4_K_M.gguf")?;
 
+    /*let vocab_path = download_file_to_cache(
+        "https://huggingface.co/facebook/m2m100_418M/resolve/main/sentencepiece.bpe.model",
+    )
+    .unwrap();*/
+    //let tokenizer = SentencePieceBpeTokenizer::from_file(tokenizer_filename, false)?;
+    
     let tokenizer = Tokenizer::from_file(tokenizer_filename).map_err(E::msg)?;
     let config = Config::v2();
     let vb = candle_transformers::quantized_var_builder::VarBuilder::from_gguf(&weights_filename, &device(false)?)?;

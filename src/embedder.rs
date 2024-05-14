@@ -149,7 +149,6 @@ pub fn chunk_string(text: &str, max_len: usize) -> Vec<String> {
 }
 
 // Return a vector with filenames with correct extension.
-#[allow(dead_code)]
 pub fn read_dir_contents<P: AsRef<Path>>(path: P) -> anyhow::Result<Vec<PathBuf>> {
     // Read the directory
     let mut file_paths = Vec::new();
@@ -159,7 +158,7 @@ pub fn read_dir_contents<P: AsRef<Path>>(path: P) -> anyhow::Result<Vec<PathBuf>
         let path = entry.path();
         if path.is_file() {
             if let Some(ext) = path.extension() {
-                if ext == "xml" || ext == "txt" {
+                if ext == "xml" || ext == "txt" || ext == "md" {
                     file_paths.push(path);
                 }
             }
@@ -173,12 +172,12 @@ pub fn read_dir_contents<P: AsRef<Path>>(path: P) -> anyhow::Result<Vec<PathBuf>
     Ok(file_paths)   
 }
 
-pub fn embed_file_txt(path: &str, chunk_size: usize) -> anyhow::Result<Vec<String>> {
+pub fn embed_file_txt<P: AsRef<Path>>(path: P, chunk_size: usize) -> anyhow::Result<Vec<String>> {
     let contents = fs::read_to_string(path)?;
     Ok(chunk_string(&contents, chunk_size))
 }
 
-pub fn embed_file_pdf(path: &str, chunk_size: usize) -> anyhow::Result<Vec<String>> {
+pub fn embed_file_pdf<P: AsRef<Path>>(path: P, chunk_size: usize) -> anyhow::Result<Vec<String>> {
     let bytes = std::fs::read(path).unwrap();
     let out = pdf_extract::extract_text_from_mem(&bytes).unwrap();
     Ok(chunk_string(&out, chunk_size))
