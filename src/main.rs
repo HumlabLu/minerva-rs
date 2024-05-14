@@ -113,7 +113,9 @@ fn main() -> anyhow::Result<()> {
         for filename in filenames {
             let filename_str = filename.clone().into_os_string().into_string().unwrap();
             print!("Reading {}", filename_str);
-            let chunked_data: Option<Vec<String>> = Some(embed_file_txt(filename, args.chunksize).expect("File does not exist?"));
+
+            // Should check extension...
+            let chunked_data = Some(embed_file_txt(filename, args.chunksize).expect("File does not exist?"));
             
             if let Some(data) = chunked_data {
                 let vectors = embeddings(data.clone()).expect("Cannot create embeddings.");
@@ -124,8 +126,12 @@ fn main() -> anyhow::Result<()> {
                 println!(", Items {}", data.len());
             }
         }
-        let ids = collection.insert_many(&records).unwrap();
-        println!("Added {:?} items", ids.len());
+        if records.len() > 0 {
+            let ids = collection.insert_many(&records).unwrap();
+            println!("Added {:?} items", ids.len());
+        } else {
+            println!("No items to add"));
+        }
         
         // And make it persistent.
         db.save_collection(&args.collection, &collection).unwrap();
