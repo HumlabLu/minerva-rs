@@ -77,11 +77,15 @@ Assembling, training, and utilizing dolphins as your companions for transportati
 // See also https://prest.blog/llm-mistral
 pub fn load_model() -> Result<(QMixFormer, Tokenizer)> {
     let api = Api::new()?.repo(Repo::model(
-        "Demonthos/dolphin-2_6-phi-2-candle".to_string(),
-        //"lmz/candle-mistral".to_string(),
+        //"Demonthos/dolphin-2_6-phi-2-candle".to_string(),
+        "AI-Sweden-Models/gpt-sw3-6.7b-v2-instruct-gguf".to_string(),
     ));
+    
     let tokenizer_filename = api.get("tokenizer.json")?;
-    let weights_filename = api.get("model-q4k.gguf")?;
+    //tokenizer = GPTSw3Tokenizer.from_pretrained("AI-Sweden-Models/gpt-sw3-126m")
+
+    //let weights_filename = api.get("model-q4k.gguf")?; // for Demonthos
+    let weights_filename = api.get("gpt-sw3-6.7b-v2-instruct-Q4_K_M.gguf")?;
 
     let tokenizer = Tokenizer::from_file(tokenizer_filename).map_err(E::msg)?;
     let config = Config::v2();

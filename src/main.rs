@@ -5,10 +5,12 @@ use database::{get_db, data_to_record};
 mod embedder;
 use embedder::{chunk_string, embed_file_txt, embed_file_pdf, embeddings};
 mod textgen;
+use textgen::{load_model, generate_answer};
 use std::path::Path;
 mod qmistral;
 use qmistral::run_qmistral;
 use std::collections::HashMap;
+
 
 // =====================================================================
 // Command line arguments.
@@ -79,7 +81,9 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
     println!("{:?}", &args);
-        
+
+    // _ = load_model();
+    
     // This is the saved DB, containing different collections.
     let mut db = get_db();
     let mut collection = db.get_collection(&args.collection).unwrap_or_else(|_| {
@@ -168,7 +172,6 @@ fn main() -> anyhow::Result<()> {
         let embedded_query = Vector((&v).to_vec());
         let result = collection.search(&embedded_query, args.knearest).unwrap();
 
-        //let mut string_context = vec![];
         let mut context_str = String::new();
         if result.len() == 0 {
             context_str = "Use any knowledge you have.".to_string();
@@ -181,26 +184,22 @@ fn main() -> anyhow::Result<()> {
             context_str += &(sep.to_owned() + "(document:" + &filename + ", with contents:" + &text + ")");
             sep = ", ";
         }
-/*
-        for res in result {
-            //println!("{:?}", res);
-            let md = match res.data {
-                Metadata::Text(value) => value,
-                _ => "Data is not text.".to_string()
-            };
-            //let (id, distance) = (res.id, res.distance);
-            //println!("{distance:.5} | ID: {id} {md}"); // Use verbosity
-            string_context.push(md.clone());
-            context_str += &md;
-        }*/
 
+        // ---
+
+        // Try textgen as well.
         /*
-        let ts_start = chrono::Local::now();
+        ERROR: Unable to load model: request error: https://huggingface.co/AI-Sweden-Models/gpt-sw3-6.7b-v2-instruct-gguf/resolve/main/tokenizer.json: status code 404
+
+        Caused by:
+        https://huggingface.co/AI-Sweden-Models/gpt-sw3-6.7b-v2-instruct-gguf/resolve/main/tokenizer.json: status code 404
+        */
+        /*
+        let mut string_context = vec![];
         let ans = generate_answer(&query, &string_context);
-        let ts_end = chrono::Local::now();
-        println!("{:?}", ts_end - ts_start);
         println!("{:?}", ans.unwrap().trim().to_string());
-         */
+        */
+        
         // ---
         
         let _ts_start = chrono::Local::now();
