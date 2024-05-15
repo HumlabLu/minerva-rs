@@ -11,7 +11,6 @@ mod qmistral;
 use qmistral::run_qmistral;
 use std::collections::HashMap;
 
-
 // =====================================================================
 // Command line arguments.
 // =====================================================================
@@ -36,7 +35,7 @@ struct Args {
     pub dirname: Option<String>,
 
     // The k-nearest neighbours.
-    #[clap(short, long, action, default_value_t = 2, help = "The k-nearest neighbours.")]
+    #[clap(short, long, action, default_value_t = 3, help = "The k-nearest neighbours.")]
     pub knearest: usize,
 
     // Query
@@ -76,6 +75,7 @@ fn md_to_hashmap(metadata: &Metadata) -> Option<HashMap<String, Metadata>> {
 fn md_to_str(metadata: &Metadata) -> Option<String> {
     match metadata {
         Metadata::Text(txt) => Some(txt.to_string()),
+        Metadata::Integer(i) => Some(i.to_string()),
         _ => None,
     }
 }
@@ -119,9 +119,11 @@ fn main() -> anyhow::Result<()> {
             
             if let Some(data) = chunked_data {
                 let vectors = embeddings(data.clone()).expect("Cannot create embeddings.");
+                let mut chunk_counter = 0usize;
                 for (chunk, vector) in data.iter().zip(vectors.iter()) {
-                    let record = data_to_record(vector, &filename_str, chunk); // Add chunk nr?
+                let record = data_to_record(vector, &filename_str, chunk, chunk_counter);
                     records.push(record);
+                    chunk_counter += 1;
                 }
                 println!(", Items {}", data.len());
             }
@@ -152,11 +154,13 @@ fn main() -> anyhow::Result<()> {
         if let Some(data) = chunked_data {
             let vectors = embeddings(data.clone()).expect("Cannot create embeddings.");
             let mut records = vec![];
+            let mut chunk_counter = 0usize;
             for (chunk, vector) in data.iter().zip(vectors.iter()) {
                 // With custom InitOptions
-                let record = data_to_record(vector, filename, chunk); // Add chunk nr?
+                let record = data_to_record(vector, filename, chunk, chunk_counter);
                 //println!("Record {:?}", record);
                 records.push(record);
+                chunk_counter += 1;
             }
 
             // Add it to the current collection.
@@ -173,14 +177,15 @@ fn main() -> anyhow::Result<()> {
     match args.command {
         Some(Commands::List { }) => {
             let list = collection.list().unwrap();
-            for (id, item) in list {
+            for (id, item) in list.iter() {
                 //println!("{:5} | {:?}", id.0, item.data); // data = Metadata
                 let hm = md_to_hashmap(&item.data).unwrap();
-                println!("{:5}/{:?}/{:?}/{:?}",
+                println!("{:5}/{:?}/{:?}/{:?}/{:?}",
                     id.0,
                     md_to_str(hm.get("ulid").unwrap()).unwrap(),
                     md_to_str(hm.get("date").unwrap()).unwrap(),
-                    md_to_str(hm.get("filename").unwrap()).unwrap()
+                    md_to_str(hm.get("filename").unwrap()).unwrap(),
+                    md_to_str(hm.get("ccnt").unwrap()).unwrap()
                 );
                 println!("{:?}\n", md_to_str(
                     hm.get("text").unwrap()
@@ -213,8 +218,9 @@ fn main() -> anyhow::Result<()> {
         for res in result {
             let hm = md_to_hashmap(&res.data).unwrap();
             let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
+            let chunk_nr = md_to_str(hm.get("ccnt").unwrap()).unwrap();
             let text = md_to_str(hm.get("text").unwrap()).unwrap();
-            context_str += &(sep.to_owned() + "(document:" + &filename + ", with contents:" + &text + ")");
+            context_str += &(sep.to_owned() + "\n(document:\"" + &filename + "/" + &chunk_nr + "\", with contents:" + &text + ")");
             sep = ", ";
         }
 
@@ -236,7 +242,7 @@ fn main() -> anyhow::Result<()> {
         // ---
         
         let _ts_start = chrono::Local::now();
-        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Print the name of document used from the context. Do not repeat the question or references. Today is {date}. Context: {context}. Question: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Print the name of document used from the context. Do not repeat the question or references. Today is {date}. Context: {context}. \nQuestion: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
         //let q = format!("{question}", question=query);
         //let q = format!("Du är en vänlig och hjälpsam AI-assistent. Ditt svar ska vara kortfattat och använda sammanhanget om möjligt. Skriv ut namnet på det dokument som används från sammanhanget. Upprepa inte frågan eller referenserna. Svara på Svenska! Idag är det {date}. Sammanhang: {context}. Fråga: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
         let ans = run_qmistral(&q);
