@@ -183,15 +183,21 @@ pub fn embed_file_pdf<P: AsRef<Path>>(path: P, chunk_size: usize) -> anyhow::Res
     Ok(chunk_string(&out, chunk_size))
 }
 
-pub fn embeddings<S: AsRef<str> + Send + Sync>(texts: Vec<S>) -> anyhow::Result<Vec<Embedding>>  {
+pub fn embeddings<S: AsRef<str> + Send + Sync>(texts: Vec<S>) -> anyhow::Result<Vec<Embedding>> {
     // Instantiate the model.
     let model = TextEmbedding::try_new(InitOptions {
         model_name: EmbeddingModel::AllMiniLML6V2,
         show_download_progress: true,
         ..Default::default()
     }).expect("Cannot Initialise model.");
-    
+
     // Generate embeddings.
     let embeddings = model.embed(texts, None).expect("Cannot create embeddings.");
     Ok(embeddings)
 }
+
+pub fn get_embedding_dim() -> anyhow::Result<usize> {
+    let test_model_info = TextEmbedding::get_model_info(&EmbeddingModel::AllMiniLML6V2);
+    Ok(test_model_info.dim)
+}
+    

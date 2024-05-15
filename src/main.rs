@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 mod database;
 use database::{get_db, data_to_record};
 mod embedder;
-use embedder::{chunk_string, embed_file_txt, embed_file_pdf, embeddings, read_dir_contents};
+use embedder::{chunk_string, embed_file_txt, embed_file_pdf, embeddings, read_dir_contents, get_embedding_dim};
 mod textgen;
 //use textgen::{load_model, generate_answer};
 use std::path::Path;
@@ -91,6 +91,8 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     println!("{:?}", &args);
 
+    println!("Embedding dim {}", get_embedding_dim().unwrap());
+    
     // _ = load_model();
     
     // This is the saved DB, containing different collections.
