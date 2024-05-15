@@ -44,6 +44,7 @@ Based on the context provided, Peter and Elisabet have a cat named Sirius (from 
 
 ### Example 2
 
+```shell
 pberck@holma:~/Development/Rust/minerva-rs.git$ cargo run --release -- -f facts.txt 
 Args { filename: Some("facts.txt"), chunksize: 512, collection: "vectors", dirname: None, knearest: 3, query: None, verbose: false, showprompt: false, showcontext: false, command: None }
 Embedding dim 384
@@ -87,6 +88,7 @@ pberck@holma:~/Development/Rust/minerva-rs.git$ cargo run --release -- -q "Peter
   3%|████▏                                                                                                            | 44/1199 [00:00<00:24, 46.76it/s]
 
 I'm sorry for the misunderstanding, but according to the provided context from the document "facts.txt/0", Peter's cats are named Sirius and Maja, not Sirius and Nisse.
+```
 
 ### Example 3
 
