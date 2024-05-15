@@ -48,6 +48,34 @@ TimeDelta { secs: 20, nanos: 721854000 }
 Sirius is the brightest star in the night sky, and it's part of the constellation Canis Major (The Greater Dog). You can locate it by finding the constellation Orion (identified by its distinctive "Square of Orion" asterism), then drawing a line from Betelgeuse, one of Orion's shoulders, to Bellatrix, another star in Orion. Sirius is located roughly where that line intersects with the Milky Way. Keep in mind that visibility of stars depends on various factors such as location, weather conditions, and time of year.
 ```
 
+### Another Example
+
+```shell
+pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "How many cats does Peter have?"
+    Finished release [optimized] target(s) in 0.26s
+     Running `target/release/minerva-rs -q 'How many cats does Peter have?'`
+Args { filename: None, chunksize: 512, collection: "vectors", dirname: None, knearest: 3, query: Some("How many cats does Peter have?"), verbose: false, command: None }
+DB contains 1 collections.
+Size of collection 5.
+Asking How many cats does Peter have?
+Model TheBloke/Mistral-7B-Instruct-v0.2-GGUF | mistral-7b-instruct-v0.2.Q5_K_M.gguf
+Device Cpu
+loaded 291 tensors (5.13GB) in 0.06s
+model built
+model::MAX_SEQ_LEN 4096
+"/Users/pberck/.cache/huggingface/hub/models--mistralai--Mistral-7B-v0.1/snapshots/26bca36bde8333b5d7f72e9ed20ccda6a618af24/tokenizer.json"
+[INST] You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Print the name of document used from the context. Do not repeat the question or references. Today is Wednesday, May 15, 2024. Context:
+(document:"texts/facts.txt/1", with contents:We have another cat called Maja.),
+(document:"texts/facts.txt/2", with contents:We refers to Peter and Elisabet.),
+(document:"texts/facts.txt/0", with contents:We have a cat called Sirius.).
+Question: How many cats does Peter have?. [/INST]
+Prompt length 156
+  4%|██▉                                                                | 51/1199 [00:06<03:21, 5.71it/s]
+
+Based on the context provided, Peter and Elisabet have a cat named Sirius (from facts.txt/0), and they also have another cat named Maja (from facts.txt/1). Therefore, Peter has a total of two cats.
+```
+
+
 ## Add a text.
 
 ```shell
