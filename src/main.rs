@@ -46,6 +46,12 @@ struct Args {
     #[arg(long, short, action, help = "Produce superfluous output.")]
     pub verbose: bool,
 
+    #[arg(long, action, help = "Show prompt.")]
+    pub showprompt: bool,
+    
+    #[arg(long, action, help = "Show context.")]
+    pub showcontext: bool,
+
     #[command(subcommand)]
     pub command: Option<Commands>,
 }
@@ -220,8 +226,12 @@ fn main() -> anyhow::Result<()> {
             let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
             let chunk_nr = md_to_str(hm.get("ccnt").unwrap()).unwrap();
             let text = md_to_str(hm.get("text").unwrap()).unwrap();
+            println!("  {}/{}", filename, chunk_nr);
             context_str += &(sep.to_owned() + "\n(document:\"" + &filename + "/" + &chunk_nr + "\", with contents:" + &text + ")");
             sep = ", ";
+        }
+        if args.showcontext == true {
+            println!("\n{}\n", context_str);
         }
 
         // ---
@@ -242,7 +252,10 @@ fn main() -> anyhow::Result<()> {
         // ---
         
         let _ts_start = chrono::Local::now();
-        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Print the name of document used from the context. Do not repeat the question or references. Today is {date}. Context: {context}. \nQuestion: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Print the name of document used from the context. Do not repeat the question or references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+        if args.showprompt == true {
+            println!("\n{}\n", q);
+        }
         //let q = format!("{question}", question=query);
         //let q = format!("Du är en vänlig och hjälpsam AI-assistent. Ditt svar ska vara kortfattat och använda sammanhanget om möjligt. Skriv ut namnet på det dokument som används från sammanhanget. Upprepa inte frågan eller referenserna. Svara på Svenska! Idag är det {date}. Sammanhang: {context}. Fråga: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
         let ans = run_qmistral(&q);

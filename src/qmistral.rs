@@ -100,7 +100,7 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
     let api = api.model(repo.to_string());
 
     let tokenizer_path = api.get("tokenizer.json").expect("tokeniser?");
-    println!("{:?}", tokenizer_path);
+    //println!("{:?}", tokenizer_path);
     let tokenizer = Tokenizer::from_file(tokenizer_path).map_err(E::msg)?;
     
     let pre_prompt_tokens = vec![]; // PJB remove
@@ -108,10 +108,10 @@ pub fn run_qmistral(prompt: &str) -> Result<String> {
     
     let prompt = format!("[INST] {prompt} [/INST]");
     //let prompt = format!("{prompt}");
-    println!("{}", &prompt);
+    //println!("{}", &prompt);
     
     let tokens = tokenizer.encode(prompt, true).map_err(E::msg)?;
-    println!("Prompt length {}", tokens.len());
+    println!("Prompt length {}, pre-processing...", tokens.len());
         
     if verbose_prompt {
         for (token, id) in tokens.get_tokens().iter().zip(tokens.get_ids().iter()) {

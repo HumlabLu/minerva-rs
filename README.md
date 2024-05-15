@@ -51,9 +51,9 @@ Sirius is the brightest star in the night sky, and it's part of the constellatio
 ### Another Example
 
 ```shell
-pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "How many cats does Peter have?"
-    Finished release [optimized] target(s) in 0.26s
-     Running `target/release/minerva-rs -q 'How many cats does Peter have?'`
+% cargo run --release -- --chunksize 32 -f texts/facts.txt
+
+% cargo run --release -- -q "How many cats does Peter have?"
 Args { filename: None, chunksize: 512, collection: "vectors", dirname: None, knearest: 3, query: Some("How many cats does Peter have?"), verbose: false, command: None }
 DB contains 1 collections.
 Size of collection 5.
