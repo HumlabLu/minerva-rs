@@ -255,7 +255,7 @@ fn main() -> anyhow::Result<()> {
         // ---
         
         let _ts_start = chrono::Local::now();
-        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Print the name of document used from the context. Do not repeat the question or references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
         if args.showprompt == true {
             println!("\n{}\n", q);
         }
