@@ -44,6 +44,52 @@ Based on the context provided, Peter and Elisabet have a cat named Sirius (from 
 
 ### Example 2
 
+pberck@holma:~/Development/Rust/minerva-rs.git$ cargo run --release -- -f facts.txt 
+Args { filename: Some("facts.txt"), chunksize: 512, collection: "vectors", dirname: None, knearest: 3, query: None, verbose: false, showprompt: false, showcontext: false, command: None }
+Embedding dim 384
+DB contains 1 collections.
+Added 1 items
+Size of collection 1.
+
+pberck@holma:~/Development/Rust/minerva-rs.git$ cargo run --release -- -q "How many cats does Peter have?"
+Args { filename: None, chunksize: 512, collection: "vectors", dirname: None, knearest: 3, query: Some("How many cats does Peter have?"), verbose: false, showprompt: false, showcontext: false, command: None }
+Embedding dim 384
+DB contains 1 collections.
+Size of collection 1.
+Asking How many cats does Peter have?
+0.6091 | facts.txt/0
+Model TheBloke/Mistral-7B-Instruct-v0.2-GGUF | mistral-7b-instruct-v0.2.Q5_K_M.gguf
+Device Cuda(CudaDevice(DeviceId(1)))
+loaded 291 tensors (5.13GB) in 0.30s
+model built
+model::MAX_SEQ_LEN 4096
+Prompt length 156, pre-processing...
+  1%|██                                                                                                               | 22/1199 [00:00<00:28, 41.02it/s]
+
+Peter has two cats, Sirius and Maja. (Referenced document: facts.txt/0)
+
+pberck@holma:~/Development/Rust/minerva-rs.git$ cargo run --release -- -q "Where is Peter's cat?"
+  4%|█████▌                                                                                                           | 58/1199 [00:01<00:28, 40.26it/s]
+
+Peter has two cats named Sirius and Maja. Based on the context, they live in Rörums Holma, which is located in Skåne, Sweden. So, Peter's cats are in Sweden at Rörums Holma. (facts.txt/0)
+
+pberck@holma:~/Development/Rust/minerva-rs.git$ cargo run --release -- -q "Is Peter's cat called Nisse?"
+  2%|██▌                                                                                                              | 26/1199 [00:00<00:23, 49.69it/s]
+
+No, according to the given document "facts.txt/0", Peter's cats are named Sirius and Maja.
+
+pberck@holma:~/Development/Rust/minerva-rs.git$ cargo run --release -- -q "Peter's cats are called Sirius and Maja."
+  2%|██▍                                                                                                              | 25/1199 [00:00<00:29, 40.34it/s]
+
+Sirius and Maja are the names of Peter and Elisabet's cats. (facts.txt/0)
+
+pberck@holma:~/Development/Rust/minerva-rs.git$ cargo run --release -- -q "Peter's cats are called Sirius and Nisse."
+  3%|████▏                                                                                                            | 44/1199 [00:00<00:24, 46.76it/s]
+
+I'm sorry for the misunderstanding, but according to the provided context from the document "facts.txt/0", Peter's cats are named Sirius and Maja, not Sirius and Nisse.
+
+### Example 3
+
 ```shell
 pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "Where is Sirius?"
 Args { filename: None, chunksize: 512, collection: "vectors", knearest: 2, query: Some("Where is Sirius?"), verbose: false, command: None }
