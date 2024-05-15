@@ -226,12 +226,15 @@ fn main() -> anyhow::Result<()> {
             let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
             let chunk_nr = md_to_str(hm.get("ccnt").unwrap()).unwrap();
             let text = md_to_str(hm.get("text").unwrap()).unwrap();
-            println!("  {}/{}", filename, chunk_nr);
+
+            let dist = res.distance;
+            println!("{dist:.4} | {filename}/{chunk_nr}");
+            if args.showcontext == true {
+                println!("  {}\n", text);
+            }
+
             context_str += &(sep.to_owned() + "\n(document:\"" + &filename + "/" + &chunk_nr + "\", with contents:" + &text + ")");
             sep = ", ";
-        }
-        if args.showcontext == true {
-            println!("\n{}\n", context_str);
         }
 
         // ---
