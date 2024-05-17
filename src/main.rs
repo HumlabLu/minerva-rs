@@ -153,16 +153,20 @@ fn main() -> anyhow::Result<()> {
         if path.is_file() {
             if let Some(ext) = path.extension() {
                 if ext == "txt" {
+                    println!("Chunking text file.");
                     chunked_data = Some(embed_file_txt(filename, args.chunksize).expect("File does not exist?"));
                 } else if ext == "pdf" {
+                    println!("Chunking PDF file.");
                     chunked_data = Some(embed_file_pdf(filename, args.chunksize).expect("File does not exist?"));
                 }
             }
         }
         if let Some(data) = chunked_data {
+            println!("Creating embeddings.");
             let vectors = embeddings(data.clone()).expect("Cannot create embeddings.");
             let mut records = vec![];
             let mut chunk_counter = 0usize;
+            println!("Storing embeddings.");
             for (chunk, vector) in data.iter().zip(vectors.iter()) {
                 // With custom InitOptions
                 let record = data_to_record(vector, filename, chunk, chunk_counter);
@@ -216,8 +220,9 @@ fn main() -> anyhow::Result<()> {
         let vectors = embeddings(data).expect("Cannot create embeddings.");
         let v = vectors.get(0).expect("uh");
         let embedded_query = Vector((&v).to_vec());
-        let result = collection.search(&embedded_query, args.knearest).unwrap();
-
+        //let result = collection.search(&embedded_query, args.knearest).unwrap();
+        let result = collection.true_search(&embedded_query, args.knearest).unwrap();
+        
         let mut context_str = String::new();
         if result.len() == 0 {
             context_str = "Use any knowledge you have.".to_string();
@@ -257,7 +262,7 @@ fn main() -> anyhow::Result<()> {
         // ---
         
         let _ts_start = chrono::Local::now();
-        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
         if args.showprompt == true {
             println!("\n{}\n", q);
         }

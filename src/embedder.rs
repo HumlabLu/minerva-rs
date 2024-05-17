@@ -142,10 +142,8 @@ pub fn chunk_string(text: &str, max_len: usize) -> Vec<String> {
     // Maximum number of characters in a chunk
     let max_characters = max_len-25..max_len+25; //225..275;
     let splitter = TextSplitter::new(max_characters);
-    let chunks = splitter.chunks(text).collect::<Vec<_>>();
-    let chunks: Vec<String> = chunks.into_iter().map(|v| v.to_string()).collect(); // hmmpf.
 
-    chunks
+    splitter.chunks(text).map(|v| v.to_string()).collect()
 }
 
 // Return a vector with filenames with correct extension.
