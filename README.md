@@ -44,10 +44,10 @@ and they also have another cat named Maja (from facts.txt/1). Therefore,
 Peter has a total of two cats.
 ```
 
-### Example 2
+### Example 2 -- Larger Chunks
 
 ```shell
-cargo run --release -- -f facts.txt 
+cargo run --release -- -f facts.txt
 Args { filename: Some("facts.txt"), chunksize: 512, collection: "vectors", dirname: None, knearest: 3, query: None, verbose: false, showprompt: false, showcontext: false, command: None }
 Embedding dim 384
 DB contains 1 collections.
@@ -100,7 +100,7 @@ Device Cpu
 loaded 291 tensors (5.13GB) in 0.06s
 model built
 model::MAX_SEQ_LEN 4096
-"/Users/pberck/.cache/huggingface/hub/models--mistralai--Mistral-7B-v0.1/snapshots/26bca36bde8333b5d7f72e9ed20ccda6a618af24/tokenizer.json"
+
 [INST] You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not repeat the question or references. Today is Thursday, May  9, 2024. Context: We have a cat called Sirius. We have another cat called Maja. We refers to Peter and Elisabet. They live in Rörums Holma. Rörumns Holma is in Skåne. Skåne is in Sweden.. Question: Where is Sirius?. [/INST]
 
  115 prompt tokens processed: 13.42 token/s
