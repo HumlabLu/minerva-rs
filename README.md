@@ -39,7 +39,9 @@ model::MAX_SEQ_LEN 4096
 (document:"texts/facts.txt/0", with contents:We have a cat called Sirius.).
 Question: How many cats does Peter have?. [/INST]
 
-Based on the context provided, Peter and Elisabet have a cat named Sirius (from facts.txt/0), and they also have another cat named Maja (from facts.txt/1). Therefore, Peter has a total of two cats.
+Based on the context provided, Peter and Elisabet have a cat named Sirius (from facts.txt/0),
+and they also have another cat named Maja (from facts.txt/1). Therefore,
+Peter has a total of two cats.
 ```
 
 ### Example 2
