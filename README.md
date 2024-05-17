@@ -18,6 +18,9 @@ export PATH=$PATH:/usr/local/cuda-12.2/bin/
 ### Example 1
 
 ```shell
+% cat texts/facts.txt
+We have a cat called Sirius. We have another cat called Maja. We refers to Peter and Elisabet. They live in Rörums Holma. Rörumns Holma is in Skåne. Skåne is in Sweden.
+
 % cargo run --release -- --chunksize 32 -f texts/facts.txt
 
 % cargo run --release -- -q "How many cats does Peter have?"
@@ -30,14 +33,11 @@ Device Cpu
 loaded 291 tensors (5.13GB) in 0.06s
 model built
 model::MAX_SEQ_LEN 4096
-"/Users/pberck/.cache/huggingface/hub/models--mistralai--Mistral-7B-v0.1/snapshots/26bca36bde8333b5d7f72e9ed20ccda6a618af24/tokenizer.json"
 [INST] You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Print the name of document used from the context. Do not repeat the question or references. Today is Wednesday, May 15, 2024. Context:
 (document:"texts/facts.txt/1", with contents:We have another cat called Maja.),
 (document:"texts/facts.txt/2", with contents:We refers to Peter and Elisabet.),
 (document:"texts/facts.txt/0", with contents:We have a cat called Sirius.).
 Question: How many cats does Peter have?. [/INST]
-Prompt length 156
-  4%|██▉                                                                | 51/1199 [00:06<03:21, 5.71it/s]
 
 Based on the context provided, Peter and Elisabet have a cat named Sirius (from facts.txt/0), and they also have another cat named Maja (from facts.txt/1). Therefore, Peter has a total of two cats.
 ```
