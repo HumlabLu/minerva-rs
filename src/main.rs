@@ -99,7 +99,8 @@ fn main() -> anyhow::Result<()> {
     let mut db = get_db();
     let mut collection = db.get_collection(&args.collection).unwrap_or_else(|_| {
         println!("Creating a new empty collection.");
-        let config = Config::default();
+        let mut config = Config::default();
+        config.distance = Distance::Cosine;
         //Collection::build(&config, &records).unwrap()
         let c = Collection::new(&config);
         db.save_collection(&args.collection, &c).unwrap(); // Save it so it exists on disk.
