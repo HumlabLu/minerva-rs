@@ -92,7 +92,7 @@ fn main() -> anyhow::Result<()> {
     println!("{:?}", &args);
 
     println!("Embedding dim {}", get_embedding_dim().unwrap());
-    
+
     // _ = load_model();
     
     // This is the saved DB, containing different collections.
@@ -220,8 +220,9 @@ fn main() -> anyhow::Result<()> {
         let vectors = embeddings(data).expect("Cannot create embeddings.");
         let v = vectors.get(0).expect("uh");
         let embedded_query = Vector((&v).to_vec());
-        //let result = collection.search(&embedded_query, args.knearest).unwrap();
-        let result = collection.true_search(&embedded_query, args.knearest).unwrap();
+        //dbg!("{}", &embedded_query);
+        let result = collection.search(&embedded_query, args.knearest).unwrap();
+        //let result = collection.true_search(&embedded_query, args.knearest).unwrap();
         
         let mut context_str = String::new();
         if result.len() == 0 {
