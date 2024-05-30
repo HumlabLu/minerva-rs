@@ -34,6 +34,9 @@ struct Args {
     #[arg(short, long, help = "Directory with text files.")]
     pub dirname: Option<String>,
 
+    #[arg(short, long, help = "Maximum distance.", default_value_t = 0.6500)]
+    pub maxdist: f32,
+
     // The k-nearest neighbours.
     #[clap(short, long, action, default_value_t = 3, help = "The k-nearest neighbours.")]
     pub knearest: usize,
@@ -99,8 +102,8 @@ fn main() -> anyhow::Result<()> {
     let mut db = get_db();
     let mut collection = db.get_collection(&args.collection).unwrap_or_else(|_| {
         println!("Creating a new empty collection.");
-        let mut config = Config::default();
-        config.distance = Distance::Cosine;
+        let  config = Config::default();
+        //config.distance = Distance::Cosine;
         //Collection::build(&config, &records).unwrap()
         let c = Collection::new(&config);
         db.save_collection(&args.collection, &c).unwrap(); // Save it so it exists on disk.
@@ -224,24 +227,41 @@ fn main() -> anyhow::Result<()> {
         //dbg!("{}", &embedded_query);
         let result = collection.search(&embedded_query, args.knearest).unwrap();
         //let result = collection.true_search(&embedded_query, args.knearest).unwrap();
-        
+
         let mut context_str = String::new();
         if result.len() == 0 {
             context_str = "Use any knowledge you have.".to_string();
         }
+        
+        for res in &result {
+            let hm = md_to_hashmap(&res.data).unwrap();
+            let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
+            let chunk_nr = md_to_str(hm.get("ccnt").unwrap()).unwrap();
+            let dist = res.distance;
+            print!("{dist:.4} | {filename}/{chunk_nr}");
+            if dist < args.maxdist {
+                println!(" *");
+            } else {
+                println!(" | filtered");
+            }
+        }
+        
+        let result: Vec<SearchResult> = result.into_iter().filter(|s| s.distance < args.maxdist).collect();
+        if result.len() == 0 {
+            println!("All results have been filtered :-(");
+        }
+
+        // Double, cache the results in the first iteration.
         let mut sep = "";
-        for res in result {
+        for res in &result {
             let hm = md_to_hashmap(&res.data).unwrap();
             let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
             let chunk_nr = md_to_str(hm.get("ccnt").unwrap()).unwrap();
             let text = md_to_str(hm.get("text").unwrap()).unwrap();
-
-            let dist = res.distance;
-            println!("{dist:.4} | {filename}/{chunk_nr}");
+            
             if args.showcontext == true {
                 println!("  {}\n", text);
             }
-
             context_str += &(sep.to_owned() + "\n(document:\"" + &filename + "/" + &chunk_nr + "\", with contents:" + &text + ")");
             sep = ", ";
         }
