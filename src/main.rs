@@ -24,7 +24,7 @@ struct Args {
     pub filename: Option<String>, // Path thingy?
 
     // Chunk size
-    #[clap(long, action, default_value_t = 512, help = "Chunk size in characters.")]
+    #[clap(long, action, default_value_t = 1024, help = "Chunk size in characters.")]
     pub chunksize: usize,
 
     // Name of the database (collection)
