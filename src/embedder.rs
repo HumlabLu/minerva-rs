@@ -106,3 +106,65 @@ pub fn get_embedding_dim() -> anyhow::Result<usize> {
     Ok(test_model_info.dim)
 }
     
+// =====================================================================
+// Tests.
+// Use
+//   cargo test --release -- --nocapture
+// to see dnbg/println output in tests.
+// =====================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn chunk_ml100() {
+        let max_len = 100;
+        let max_characters = max_len-25..max_len+25;
+        let splitter = TextSplitter::new(max_characters);
+        let text = "the quick brown fox jumps over the lazy dog. And another sentence. Seven!".to_string();
+        let result: Vec<_> = splitter.chunks(&text).collect();
+        assert!(result[0] == "the quick brown fox jumps over the lazy dog. And another sentence. Seven!");
+    }
+    
+    #[test]
+    fn chunk_ml48() {
+        let max_len = 48;
+        let max_characters = max_len-12..max_len+12;
+        let splitter = TextSplitter::new(max_characters);
+        let text = "the quick brown fox jumps over the lazy dog. And another sentence. Seven!".to_string();
+        let result: Vec<_> = splitter.chunks(&text).collect();
+        assert!(result[0] == "the quick brown fox jumps over the lazy dog.");
+        assert!(result[1] == "And another sentence. Seven!");
+    }
+    
+    #[test]
+    fn chunk_ml28() {
+        let max_len = 28;
+        let max_characters = max_len-12..max_len+12;
+        let splitter = TextSplitter::new(max_characters);
+        let text = "the quick brown fox jumps over the lazy dog. And another sentence. Seven!".to_string();
+        let result: Vec<_> = splitter.chunks(&text).collect();
+        assert!(result[0] == "the quick brown fox");
+        assert!(result[1] == "jumps over the lazy dog.");
+        assert!(result[2] == "And another sentence.");
+        assert!(result[3] == "Seven!");
+    }
+
+    #[test]
+    fn chunk_ml12() {
+        let max_len = 12;
+        let max_characters = max_len-4..max_len+4;
+        let splitter = TextSplitter::new(max_characters);
+        let text = "the quick brown fox jumps over the lazy dog. And another sentence. Seven!".to_string();
+        let result: Vec<_> = splitter.chunks(&text).collect();
+        //dbg!("{:?}", &result);
+        assert!(result[0] ==  "the quick");
+        assert!(result[1] == "brown fox");
+        assert!(result[2] == "jumps over");
+        assert!(result[3] == "the lazy dog.");
+        assert!(result[4] == "And another");
+        assert!(result[5] == "sentence.");
+        assert!(result[6] == "Seven!");
+    }
+}
