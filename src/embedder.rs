@@ -167,4 +167,14 @@ mod tests {
         assert!(result[5] == "sentence.");
         assert!(result[6] == "Seven!");
     }
+
+    #[test]
+    fn chunk_a_string() {
+        let text = "the quick brown fox jumps over the lazy dog. And another sentence. Seven!".to_string();
+        let result: Vec<_> = chunk_string(&text, 28);
+        dbg!("{:?}", &result);
+        assert!(result[0] == "the quick brown fox jumps over the lazy dog.");
+        assert!(result[1] == "And another sentence.");
+        assert!(result[2] == "Seven!");
+    }
 }
