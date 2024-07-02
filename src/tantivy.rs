@@ -1,5 +1,5 @@
 use tantivy::collector::TopDocs;
-use tantivy::query::QueryParser;
+use tantivy::query::{QueryParser, TermQuery};
 use tantivy::schema::*;
 use tantivy::{doc, Index, IndexReader, IndexWriter, ReloadPolicy};
 use tantivy::directory::MmapDirectory;
@@ -48,6 +48,25 @@ pub fn insert_doc(index: &Index, tdoc: TantivyDocument) -> tantivy::Result<()> {
     Ok(())
 }
 
+// Needs testing/work.
+// Probably not on an Index but on an IndexWriter so we check before
+// inserting in a loop?
+// unique_id needs to be a hash on the title+body, or something.
+pub fn document_exists(index: &Index, unique_id: &str) -> tantivy::Result<bool> {
+    let reader: IndexReader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
+    let searcher = reader.searcher();
+
+    let schema = index.schema();
+    let unique_id_field = schema.get_field("unique_id").unwrap();
+
+    let term = tantivy::Term::from_field_text(unique_id_field, unique_id);
+    let query = TermQuery::new(term, tantivy::schema::IndexRecordOption::Basic);
+
+    let top_docs = searcher.search(&query, &TopDocs::with_limit(1))?;
+    
+    Ok(!top_docs.is_empty())
+}
+
 pub fn get_num_documents(index: &Index) -> tantivy::Result<u64> {
     let reader: IndexReader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
     let searcher = reader.searcher();
@@ -87,6 +106,7 @@ Longer string.", 1, 1)?;
     );
     old_man_doc.add_u64(page_number, 28);
     index_writer.add_document(old_man_doc)?;
+    //insert_doc(&index, old_man_doc).unwrap(); // nope, we already have an active index_writer.
     
     index_writer.add_document(doc!(
         title => "Of Mice and Men",
@@ -115,6 +135,11 @@ Longer string.", 1, 1)?;
     
     index_writer.commit()?; // Finish processing the queue.
 
+    /*
+    drop(index_writer);
+    insert_doc(&index, old_man_doc).unwrap();
+    */
+    
     let _reader = index
         .reader_builder()
         .reload_policy(ReloadPolicy::OnCommitWithDelay)
