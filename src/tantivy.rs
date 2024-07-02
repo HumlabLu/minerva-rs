@@ -16,15 +16,49 @@ static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     schema_builder.build()
 });
 
+pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64, chunk_number: u64) -> tantivy::Result<()> {
+    let schema = index.schema();
+    let mut index_writer: IndexWriter = index.writer(50_000_000)?;
+    
+    let title_field = schema.get_field("title").unwrap();
+    let body_field = schema.get_field("body").unwrap();
+    let page_number_field = schema.get_field("page_number").unwrap();
+    let chunk_number_field = schema.get_field("chunk_number").unwrap();
+
+    let _ = index_writer.add_document(doc!(
+        title_field => title,
+        body_field => body,
+        page_number_field => page_number,
+        chunk_number_field => chunk_number
+    ));
+    
+    index_writer.commit()?;
+    
+    Ok(())
+}
+
+// Takes ownership of the doc!
+pub fn insert_doc(index: &Index, tdoc: TantivyDocument) -> tantivy::Result<()> {
+    let mut index_writer: IndexWriter = index.writer(50_000_000)?;
+
+    index_writer.add_document(tdoc)?;
+    index_writer.commit()?;
+    
+    Ok(())
+}
+
 pub fn tanttest() -> tantivy::Result<()> {
     let index_path = Path::new("db/tantivy");
     println!("Index path: {:?}", index_path);
     
-    let schema = &*SCHEMA;    
+    let schema = &*SCHEMA;
     let index = Index::open_in_dir(&index_path).unwrap_or_else(|_| {
         Index::create_in_dir(&index_path, schema.clone()).unwrap()
     });
-    
+
+    insert_document(&index, "Another title with Mice", "Example body text \
+Longer string.", 1, 1)?;
+
     let mut index_writer: IndexWriter = index.writer(50_000_000)?; // 50 MB buffer for indexing.
     let title = schema.get_field("title").unwrap();
     println!("title: {:?}", title);
