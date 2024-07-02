@@ -14,6 +14,7 @@ static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     schema_builder.add_text_field("body", TEXT | STORED);
     schema_builder.add_u64_field("page_number", STORED);
     schema_builder.add_u64_field("chunk_number", STORED);
+    schema_builder.add_text_field("hash_body", STRING | STORED);
     schema_builder.build()
 });
 
@@ -25,15 +26,26 @@ pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64,
     let body_field = schema.get_field("body").unwrap();
     let page_number_field = schema.get_field("page_number").unwrap();
     let chunk_number_field = schema.get_field("chunk_number").unwrap();
+    let hash_body_field = schema.get_field("hash_body").unwrap();
 
+    let hash_body = blake3::hash(body.as_bytes());
+    println!("{}", hash_body);
+
+    if document_exists(index, &hash_body.to_string()).unwrap() {
+        println!("Already present...");
+    } else {
+    
     let _ = index_writer.add_document(doc!(
         title_field => title,
         body_field => body,
         page_number_field => page_number,
-        chunk_number_field => chunk_number
+        chunk_number_field => chunk_number,
+        hash_body_field => hash_body.to_string()
     ));
     
-    index_writer.commit()?;
+        index_writer.commit()?;
+        println!("Inserted...");
+    }
     
     Ok(())
 }
@@ -52,17 +64,18 @@ pub fn insert_doc(index: &Index, tdoc: TantivyDocument) -> tantivy::Result<()> {
 // Probably not on an Index but on an IndexWriter so we check before
 // inserting in a loop?
 // unique_id needs to be a hash on the title+body, or something.
-pub fn document_exists(index: &Index, unique_id: &str) -> tantivy::Result<bool> {
+pub fn document_exists(index: &Index, hash_body: &str) -> tantivy::Result<bool> {
     let reader: IndexReader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
-    let searcher = reader.searcher();
-
     let schema = index.schema();
-    let unique_id_field = schema.get_field("unique_id").unwrap();
+    let hash_body_field = schema.get_field("hash_body").unwrap();
+    
+    let hash_body_term = Term::from_field_text(hash_body_field, hash_body);
+    
+    let searcher = reader.searcher();
+    let term_query = TermQuery::new(hash_body_term.clone(), IndexRecordOption::Basic);
+    let top_docs = searcher.search(&term_query, &TopDocs::with_limit(1))?;
 
-    let term = tantivy::Term::from_field_text(unique_id_field, unique_id);
-    let query = TermQuery::new(term, tantivy::schema::IndexRecordOption::Basic);
-
-    let top_docs = searcher.search(&query, &TopDocs::with_limit(1))?;
+    println!("{:?}", top_docs);
     
     Ok(!top_docs.is_empty())
 }

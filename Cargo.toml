@@ -14,6 +14,7 @@ categories  = [ "RAG" ]
 
 [dependencies]
 anyhow = "1.0.82"
+blake3 = "1.5.1"
 chrono = "0.4.38"
 clap = { version = "4.5.4", features = ["derive"] }
 fastembed = "3.5.0"
