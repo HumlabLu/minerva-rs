@@ -1,7 +1,8 @@
 use tantivy::collector::TopDocs;
 use tantivy::query::QueryParser;
 use tantivy::schema::*;
-use tantivy::{doc, Index, IndexWriter, ReloadPolicy};
+use tantivy::{doc, Index, IndexReader, IndexWriter, ReloadPolicy};
+use tantivy::directory::MmapDirectory;
 use tempfile::TempDir;
 use std::path::Path;
 use tantivy::snippet::{Snippet, SnippetGenerator};
@@ -47,14 +48,26 @@ pub fn insert_doc(index: &Index, tdoc: TantivyDocument) -> tantivy::Result<()> {
     Ok(())
 }
 
+pub fn get_num_documents(index: &Index) -> tantivy::Result<u64> {
+    let reader: IndexReader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
+    let searcher = reader.searcher();
+    Ok(searcher.segment_readers().iter().map(|segment_reader| segment_reader.num_docs() as u64).sum())
+}
+
 pub fn tanttest() -> tantivy::Result<()> {
     let index_path = Path::new("db/tantivy");
     println!("Index path: {:?}", index_path);
     
     let schema = &*SCHEMA;
-    let index = Index::open_in_dir(&index_path).unwrap_or_else(|_| {
+    let directory = MmapDirectory::open(Path::new(index_path))?;
+    let index = Index::open_or_create(directory, schema.clone())?;
+
+    let num_docs = get_num_documents(&index)?;
+    println!("Number of documents in the index: {}", num_docs);
+    
+    /*let index = Index::open_in_dir(&index_path).unwrap_or_else(|_| {
         Index::create_in_dir(&index_path, schema.clone()).unwrap()
-    });
+    });*/
 
     insert_document(&index, "Another title with Mice", "Example body text \
 Longer string.", 1, 1)?;
