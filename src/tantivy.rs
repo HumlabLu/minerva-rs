@@ -3,6 +3,7 @@ use tantivy::query::QueryParser;
 use tantivy::schema::*;
 use tantivy::{doc, Index, IndexWriter, ReloadPolicy};
 use tempfile::TempDir;
+use std::path::Path;
 use tantivy::snippet::{Snippet, SnippetGenerator};
 use once_cell::sync::Lazy;
 
@@ -16,12 +17,14 @@ static SCHEMA: Lazy<Schema> = Lazy::new(|| {
 });
 
 pub fn tanttest() -> tantivy::Result<()> {
-    let index_path = TempDir::new()?;
-    println!("TempDir {:?}", index_path);
+    let index_path = Path::new("db/tantivy");
+    println!("Index path: {:?}", index_path);
     
-    let schema = &*SCHEMA;
+    let schema = &*SCHEMA;    
+    let index = Index::open_in_dir(&index_path).unwrap_or_else(|_| {
+        Index::create_in_dir(&index_path, schema.clone()).unwrap()
+    });
     
-    let index = Index::create_in_dir(&index_path, schema.clone())?;
     let mut index_writer: IndexWriter = index.writer(50_000_000)?; // 50 MB buffer for indexing.
     let title = schema.get_field("title").unwrap();
     println!("title: {:?}", title);
