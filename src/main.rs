@@ -124,7 +124,7 @@ fn main() -> anyhow::Result<()> {
         let filenames = read_dir_contents(dirname).unwrap();
         for filename in filenames {
             let filename_str = filename.clone().into_os_string().into_string().unwrap();
-            print!("Reading {}", filename_str);
+            print!("Reading {}", filename_str); // Check extension here maybe...
 
             // Should check extension...
             let chunked_data = Some(embed_file_txt(filename, args.chunksize).expect("File does not exist?"));
