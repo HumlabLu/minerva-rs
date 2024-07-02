@@ -11,7 +11,7 @@ use once_cell::sync::Lazy;
 static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field("title", TEXT | STORED);
-    schema_builder.add_text_field("body", TEXT);
+    schema_builder.add_text_field("body", TEXT | STORED);
     schema_builder.add_u64_field("page_number", STORED);
     schema_builder.add_u64_field("chunk_number", STORED);
     schema_builder.build()
@@ -65,10 +65,6 @@ pub fn tanttest() -> tantivy::Result<()> {
     let num_docs = get_num_documents(&index)?;
     println!("Number of documents in the index: {}", num_docs);
     
-    /*let index = Index::open_in_dir(&index_path).unwrap_or_else(|_| {
-        Index::create_in_dir(&index_path, schema.clone()).unwrap()
-    });*/
-
     insert_document(&index, "Another title with Mice", "Example body text \
 Longer string.", 1, 1)?;
 
