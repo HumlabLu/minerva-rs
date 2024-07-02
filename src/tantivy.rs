@@ -67,12 +67,12 @@ pub fn insert_doc(index: &Index, tdoc: TantivyDocument) -> tantivy::Result<()> {
 pub fn document_exists(index: &Index, hash_body: &str) -> tantivy::Result<bool> {
     let reader: IndexReader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
     let schema = index.schema();
+
     let hash_body_field = schema.get_field("hash_body").unwrap();
-    
     let hash_body_term = Term::from_field_text(hash_body_field, hash_body);
+    let term_query = TermQuery::new(hash_body_term, IndexRecordOption::Basic);
     
     let searcher = reader.searcher();
-    let term_query = TermQuery::new(hash_body_term.clone(), IndexRecordOption::Basic);
     let top_docs = searcher.search(&term_query, &TopDocs::with_limit(1))?;
 
     println!("{:?}", top_docs);
