@@ -10,6 +10,8 @@ use std::path::Path;
 mod qmistral;
 use qmistral::run_qmistral;
 use std::collections::HashMap;
+mod tantivy;
+use tantivy::tanttest;
 
 // =====================================================================
 // Command line arguments.
@@ -96,6 +98,8 @@ fn main() -> anyhow::Result<()> {
 
     println!("Embedding dim {}", get_embedding_dim().unwrap());
 
+    _ = tanttest();
+    
     // _ = load_model();
     
     // This is the saved DB, containing different collections.
