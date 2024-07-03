@@ -64,10 +64,14 @@ pub fn insert_doc(index: &Index, mut tdoc: TantivyDocument) -> tantivy::Result<(
         let hash_body_value = x.as_str().unwrap();
         let hash_body_value = blake3::hash(hash_body_value.as_bytes());
         tdoc.add_text(hash_body_field, hash_body_value);
-        //println!("{:?}", hash_body_value);
-    }
-    index_writer.add_document(tdoc)?;
-    index_writer.commit()?;
+        if document_exists(index, &hash_body_value.to_string()).unwrap() {
+          println!("Double...");  
+        } else {
+            index_writer.add_document(tdoc)?;
+            index_writer.commit()?;
+            println!("Inserted...");  
+        }
+    } // Else add hash 0 or something? Can this happen?
     
     Ok(())
 }
@@ -132,8 +136,15 @@ Longer string.", 1, 1)?;
     old_man_doc.add_u64(page_number, 28);
     insert_doc(&index, old_man_doc).unwrap();
 
-    let mut index_writer: IndexWriter = index.writer(50_000_000)?; // 50 MB buffer for indexing.
+    insert_document(&index, "Frankenstein",
+        "You will rejoice to hear that no disaster has accompanied the commencement of an \
+             enterprise which you have regarded with such evil forebodings.  I arrived here \
+             yesterday, and my first task is to assure my dear sister of my welfare and \
+             increasing confidence in the success of my undertaking.",
+        42, 128).unwrap();
     
+    /*
+    let mut index_writer: IndexWriter = index.writer(50_000_000)?; // 50 MB buffer for indexing.
     index_writer.add_document(doc!(
         title => "Of Mice and Men",
         body => "A few miles south of Soledad, the Salinas River drops in close to the hillside \
@@ -146,7 +157,8 @@ Longer string.", 1, 1)?;
             limbs and branches that arch over the pool",
         page_number => 42u64
     ))?;
-    
+    */
+    /*
     index_writer.add_document(doc!(
         title => "Frankenstein",
         title => "The Modern Prometheus",
@@ -157,9 +169,9 @@ Longer string.", 1, 1)?;
         body => "Another body?",
         page_number => 42u64,
         chunk_number => 128u64
-    ))?;
+    ))?;*/
     
-    index_writer.commit()?; // Finish processing the queue.
+    //index_writer.commit()?; // Finish processing the queue.
 
     /*
     drop(index_writer);
