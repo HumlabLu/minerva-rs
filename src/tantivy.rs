@@ -17,6 +17,8 @@ static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     schema_builder.build()
 });
 
+// Insert the four main fields, and calculates the body_hash
+// from the body text.
 pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64, chunk_number: u64) -> tantivy::Result<()> {
     let schema = index.schema();
     let mut index_writer: IndexWriter = index.writer(50_000_000)?;
@@ -27,25 +29,26 @@ pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64,
     let chunk_number_field = schema.get_field("chunk_number").unwrap();
     let hash_body_field = schema.get_field("hash_body").unwrap();
 
-    let hash_body = blake3::hash(body.as_bytes());
-    println!("{}", hash_body);
+    let hash_body_value = blake3::hash(body.as_bytes());
+    //println!("{}", hash_body_value);
 
-    if document_exists(index, &hash_body.to_string()).unwrap() {
-        println!("Already present...");
-    } else {
-    
-    let _ = index_writer.add_document(doc!(
-        title_field => title,
-        body_field => body,
-        page_number_field => page_number,
-        chunk_number_field => chunk_number,
-        hash_body_field => hash_body.to_string()
-    ));
-    
-        index_writer.commit()?;
-        println!("Inserted...");
+    match document_exists(&index, &hash_body_value.to_string()) {
+        Ok(exists) => {
+            if ! exists {
+                println!("Adding document.");
+                let _ = index_writer.add_document(doc!(
+                    title_field => title,
+                    body_field => body,
+                    page_number_field => page_number,
+                    chunk_number_field => chunk_number,
+                    hash_body_field => hash_body_value.to_string()
+                ));
+                index_writer.commit()?;
+            }
+        }
+        Err(e) => println!("Error occurred: {:?}", e)
     }
-    
+        
     Ok(())
 }
 
@@ -53,24 +56,30 @@ pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64,
 pub fn insert_doc(index: &Index, mut tdoc: TantivyDocument) -> tantivy::Result<()> {
     let mut index_writer: IndexWriter = index.writer(50_000_000)?;
 
-    // Need to calculate the body_hash.
+    // Calculate the body_hash.
     let schema = index.schema();
     let body_field = schema.get_field("body").unwrap();
     let hash_body_field = schema.get_field("hash_body").unwrap();
     /*for x in tdoc.get_all(body_field) {
         println!("{:?}", x);
     }*/
-    if let Some(x) = tdoc.get_first(body_field) {
+    if let Some(x) = tdoc.get_first(body_field) { // We only process the first one.
+        // https://github.com/quickwit-oss/tantivy/pull/2071 for as_str() info.
         let hash_body_value = x.as_str().unwrap();
         let hash_body_value = blake3::hash(hash_body_value.as_bytes());
-        tdoc.add_text(hash_body_field, hash_body_value);
-        if document_exists(index, &hash_body_value.to_string()).unwrap() {
-          println!("Double...");  
-        } else {
-            index_writer.add_document(tdoc)?;
-            index_writer.commit()?;
-            println!("Inserted...");  
+
+        match document_exists(&index, &hash_body_value.to_string()) {
+            Ok(exists) => {
+                if ! exists {
+                    println!("Adding document.");
+                    tdoc.add_text(hash_body_field, hash_body_value);
+                    index_writer.add_document(tdoc)?;
+                    index_writer.commit()?;
+                }
+            }
+            Err(e) => println!("Error occurred: {:?}", e)
         }
+        
     } // Else add hash 0 or something? Can this happen?
     
     Ok(())
@@ -85,14 +94,14 @@ pub fn document_exists(index: &Index, hash_body: &str) -> tantivy::Result<bool> 
     let reader: IndexReader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
     let schema = index.schema();
 
-    let hash_body_field = schema.get_field("hash_body").unwrap();
+    let hash_body_field = schema.get_field("hash_body")?;
     let hash_body_term = Term::from_field_text(hash_body_field, hash_body);
     let term_query = TermQuery::new(hash_body_term, IndexRecordOption::Basic);
     
     let searcher = reader.searcher();
     let top_docs = searcher.search(&term_query, &TopDocs::with_limit(1))?;
 
-    println!("{:?}", top_docs);
+   // println!("{:?}", top_docs);
     
     Ok(!top_docs.is_empty())
 }
@@ -114,17 +123,19 @@ pub fn tanttest() -> tantivy::Result<()> {
     let num_docs = get_num_documents(&index)?;
     println!("Number of documents in the index: {}", num_docs);
     
-    insert_document(&index, "Another title with Mice", "Example body text \
+    insert_document(&index, "Another title with Mice", "Example body text \n\
 Longer string.", 1, 1)?;
 
     let title = schema.get_field("title").unwrap();
-    println!("title: {:?}", title);
     let body = schema.get_field("body").unwrap();
-    println!("body: {:?}", body);
     let page_number = schema.get_field("page_number").unwrap();
-    println!("page_number: {:?}", page_number);
     let chunk_number = schema.get_field("chunk_number").unwrap();
+    /*
+    println!("title: {:?}", title);
+    println!("body: {:?}", body);
+    println!("page_number: {:?}", page_number);
     println!("chunk_number: {:?}", chunk_number);
+     */
     
     let mut old_man_doc = TantivyDocument::default();
     old_man_doc.add_text(title, "The Old Man and the Sea");
@@ -134,6 +145,7 @@ Longer string.", 1, 1)?;
          eighty-four days now without taking a fish.",
     );
     old_man_doc.add_u64(page_number, 28);
+    old_man_doc.add_u64(chunk_number, 8);
     insert_doc(&index, old_man_doc).unwrap();
 
     insert_document(&index, "Frankenstein",
@@ -222,6 +234,9 @@ Longer string.", 1, 1)?;
         let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
         println!("retrieved {score}: {}", retrieved_doc.to_json(&schema));
     }
+
+    let num_docs = get_num_documents(&index)?;
+    println!("Number of documents in the index: {}", num_docs);
 
     Ok(())
 }
