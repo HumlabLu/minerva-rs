@@ -241,3 +241,29 @@ Longer string.", 1, 1)?;
     Ok(())
 }
 
+pub fn search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument)>> {
+    let index_path = Path::new("db/tantivy");
+    
+    let schema = &*SCHEMA;  // Ensure SCHEMA is defined and available in scope
+    let directory = MmapDirectory::open(index_path)?;
+    let index = Index::open_or_create(directory, schema.clone())?;
+    
+    let title = schema.get_field("title").unwrap();
+    let body = schema.get_field("body").unwrap();
+    
+    let reader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
+    let searcher = reader.searcher();
+    
+    let query_parser = QueryParser::for_index(&index, vec![title, body]);
+    let query = query_parser.parse_query(query_str)?;
+    
+    let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
+    
+    let mut documents = Vec::new();
+    for (score, doc_address) in top_docs {
+        let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
+        documents.push((score, retrieved_doc));
+    }
+    
+    Ok(documents)
+}

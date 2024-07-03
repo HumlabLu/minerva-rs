@@ -10,8 +10,9 @@ use std::path::Path;
 mod qmistral;
 use qmistral::run_qmistral;
 use std::collections::HashMap;
-mod tantivy;
-use tantivy::tanttest;
+mod tant;
+use tant::{tanttest, search_documents};
+use tantivy::{Index, IndexReader, ReloadPolicy, TantivyDocument};
 
 // =====================================================================
 // Command line arguments.
@@ -99,6 +100,10 @@ fn main() -> anyhow::Result<()> {
     println!("Embedding dim {}", get_embedding_dim().unwrap());
 
     _ = tanttest();
+    let x:Vec<(f32, TantivyDocument)> = search_documents("foo");
+    for (s, d) in x {
+        println!("{}", s);
+    }
     
     // _ = load_model();
     
