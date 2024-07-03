@@ -6,6 +6,7 @@ use tantivy::directory::MmapDirectory;
 use std::path::Path;
 use tantivy::snippet::{SnippetGenerator};
 use once_cell::sync::Lazy;
+use std::fs;
 
 static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     let mut schema_builder = Schema::builder();
@@ -44,6 +45,7 @@ pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64,
                     hash_body_field => hash_body_value.to_string()
                 ));
                 index_writer.commit()?;
+                println!("Added.");
             }
         }
         Err(e) => println!("Error occurred: {:?}", e)
@@ -82,6 +84,29 @@ pub fn insert_doc(index: &Index, mut tdoc: TantivyDocument) -> tantivy::Result<(
         
     } // Else add hash 0 or something? Can this happen?
     
+    Ok(())
+}
+
+// We need to be able to define the DB path as well...
+// Or have it as an argument here!
+pub fn get_index_schema() -> tantivy::Result<(Index, Schema)> {
+    let index_path = Path::new("db/tantivy");
+    let schema = &*SCHEMA;
+    let directory = MmapDirectory::open(Path::new(index_path))?;
+    let index = Index::open_or_create(directory, schema.clone())?;
+    Ok((index, schema.clone()))
+}
+
+// index should be a parameter, because we want to know where
+// we store it the document.
+pub fn insert_file<P: AsRef<Path>>(index: &Index, path: P) -> tantivy::Result<()> {
+    let path_ref = path.as_ref();
+    let filename_str = path_ref.to_str().ok_or_else(|| {
+        tantivy::TantivyError::InvalidArgument(format!("Invalid path: {:?}", path_ref))
+    })?;
+    let contents = fs::read_to_string(path_ref).expect("Cannot read file.");
+
+    let _ = insert_document(&index, filename_str, &contents, 0, 0)?;
     Ok(())
 }
 

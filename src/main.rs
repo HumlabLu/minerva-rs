@@ -11,7 +11,7 @@ mod qmistral;
 use qmistral::run_qmistral;
 use std::collections::HashMap;
 mod tant;
-use tant::{tanttest, search_documents};
+use tant::{tanttest, search_documents, insert_file, get_index_schema, get_num_documents};
 use tantivy::{Index, IndexReader, ReloadPolicy, TantivyDocument};
 
 // =====================================================================
@@ -100,11 +100,15 @@ fn main() -> anyhow::Result<()> {
     println!("Embedding dim {}", get_embedding_dim().unwrap());
 
     //_ = tanttest();
-    let x:Vec<(f32, TantivyDocument)> = search_documents("Longer").unwrap();
-    for (s, d) in x {
-        println!("{}: {:?}", s, d);
+    let (i, s) = get_index_schema().unwrap();
+    let num_docs = get_num_documents(&i)?;
+    println!("Number of documents in the index: {}", num_docs);
+
+    let x = search_documents("healthcare").unwrap();
+    for (s, _d) in x {
+        println!("{}", s);
     }
-    
+
     // _ = load_model();
     
     // This is the saved DB, containing different collections.
@@ -128,13 +132,19 @@ fn main() -> anyhow::Result<()> {
         c
     });
 
+    // This code can be simplified by putting a single file in a vactor and
+    // also treating it as "-d".
     if let Some(dirname) = &args.dirname {
         let mut records = vec![];
         let filenames = read_dir_contents(dirname).unwrap();
+        let (index, schema) = get_index_schema().unwrap();
         for filename in filenames {
             let filename_str = filename.clone().into_os_string().into_string().unwrap();
             print!("Reading {}", filename_str); // Check extension here maybe...
 
+            // Add to tantivy database here as well.
+            let _ = insert_file(&index, &filename);
+            
             // Should check extension...
             let chunked_data = Some(embed_file_txt(filename, args.chunksize).expect("File does not exist?"));
             
