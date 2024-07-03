@@ -99,10 +99,10 @@ fn main() -> anyhow::Result<()> {
 
     println!("Embedding dim {}", get_embedding_dim().unwrap());
 
-    _ = tanttest();
-    let x:Vec<(f32, TantivyDocument)> = search_documents("foo");
+    //_ = tanttest();
+    let x:Vec<(f32, TantivyDocument)> = search_documents("Longer").unwrap();
     for (s, d) in x {
-        println!("{}", s);
+        println!("{}: {:?}", s, d);
     }
     
     // _ = load_model();
