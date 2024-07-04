@@ -42,11 +42,15 @@ struct Args {
 
     // The k-nearest neighbours.
     #[clap(short, long, action, default_value_t = 3, help = "The k-nearest neighbours.")]
-    pub knearest: usize,
+    pub nearest: usize,
 
     // Query
     #[arg(short, long, help = "Question?")]
     pub query: Option<String>,
+
+    // Keyword
+    #[arg(short, long, help = "Keyword")]
+    pub keyword: Option<String>,
 
     // Extra output
     #[arg(long, short, action, help = "Produce superfluous output.")]
@@ -104,10 +108,6 @@ fn main() -> anyhow::Result<()> {
     let num_docs = get_num_documents(&i)?;
     println!("Number of documents in the index: {}", num_docs);
 
-    let x = search_documents("light").unwrap();
-    for (s, _d) in x {
-        println!("{}", s);
-    }
     let x = fuzzy_search_documents("light").unwrap();
     for (s, _d) in x {
         println!("{}", s);
@@ -136,8 +136,9 @@ fn main() -> anyhow::Result<()> {
         c
     });
 
-    // This code can be simplified by putting a single file in a vactor and
+    // This code can be simplified by putting a single file in a vector and
     // also treating it as "-d".
+    // Separate functions for the tantivy database?
     if let Some(dirname) = &args.dirname {
         let mut records = vec![];
         let filenames = read_dir_contents(dirname).unwrap();
@@ -237,17 +238,20 @@ fn main() -> anyhow::Result<()> {
         },
         None => {}
     }
+
+    // This searches in the tantivy database.
+    if let Some(keyword) = &args.keyword {
+        println!("Keyword {}", &keyword);
+
+        let x = search_documents(&keyword).unwrap();
+        for (s, _d, snippet) in x {
+            println!("{:?}", snippet.fragment());
+        }
+    }
         
     // Search for the nearest neighbours.
     if let Some(query) = &args.query {
         println!("Asking {}", &query);
-
-        /*
-        let x = search_documents(&query).unwrap();
-        for (s, d) in x {
-            println!("{} {:?}", s, d);
-        }
-        */
         
         let data = chunk_string(query, args.chunksize);
         //println!("{:?}", data); // Only if verbose!
@@ -255,8 +259,8 @@ fn main() -> anyhow::Result<()> {
         let v = vectors.get(0).expect("uh");
         let embedded_query = Vector((&v).to_vec());
         //dbg!("{}", &embedded_query);
-        let result = collection.search(&embedded_query, args.knearest).unwrap();
-        //let result = collection.true_search(&embedded_query, args.knearest).unwrap();
+        let result = collection.search(&embedded_query, args.nearest).unwrap();
+        //let result = collection.true_search(&embedded_query, args.nearest).unwrap();
 
         let mut context_str = String::new();
         if result.len() == 0 {
