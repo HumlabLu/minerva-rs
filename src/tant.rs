@@ -1,10 +1,10 @@
-use tantivy::collector::TopDocs;
-use tantivy::query::{QueryParser, TermQuery};
+use tantivy::collector::{TopDocs, Count};
+use tantivy::query::{QueryParser, TermQuery, FuzzyTermQuery};
 use tantivy::schema::*;
 use tantivy::{doc, Index, IndexReader, IndexWriter, ReloadPolicy};
 use tantivy::directory::MmapDirectory;
 use std::path::Path;
-use tantivy::snippet::{SnippetGenerator};
+use tantivy::snippet::{Snippet, SnippetGenerator};
 use once_cell::sync::Lazy;
 use std::fs;
 
@@ -18,7 +18,7 @@ static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     schema_builder.build()
 });
 
-// Insert the four main fields, and calculates the body_hash
+// Insert the four main fields, and calculate the body_hash
 // from the body text.
 pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64, chunk_number: u64) -> tantivy::Result<()> {
     let schema = index.schema();
@@ -116,7 +116,8 @@ pub fn insert_file<P: AsRef<Path>>(index: &Index, path: P) -> tantivy::Result<()
 // unique_id needs to be a hash on the title+body, or something.
 // Adapted from https://github.com/quickwit-oss/tantivy/blob/main/examples/deleting_updating_documents.rs
 pub fn document_exists(index: &Index, hash_body: &str) -> tantivy::Result<bool> {
-    let reader: IndexReader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
+    //let reader: IndexReader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
+    let reader = index.reader()?;
     let schema = index.schema();
 
     let hash_body_field = schema.get_field("hash_body")?;
@@ -132,12 +133,13 @@ pub fn document_exists(index: &Index, hash_body: &str) -> tantivy::Result<bool> 
 }
 
 pub fn get_num_documents(index: &Index) -> tantivy::Result<u64> {
-    let reader: IndexReader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
+    //let reader: IndexReader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
+    let reader = index.reader()?;
     let searcher = reader.searcher();
     Ok(searcher.segment_readers().iter().map(|segment_reader| segment_reader.num_docs() as u64).sum())
 }
 
-pub fn tanttest() -> tantivy::Result<()> {
+pub fn _tanttest() -> tantivy::Result<()> {
     let index_path = Path::new("db/tantivy");
     println!("Index path: {:?}", index_path);
     
@@ -283,12 +285,55 @@ pub fn search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDoc
     let query = query_parser.parse_query(query_str)?;
     
     let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
+
+    let snippet_generator = SnippetGenerator::create(&searcher, &*query, body)?;
     
+    let mut documents = Vec::new();
+    for (score, doc_address) in top_docs {
+        let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
+        println!("doc: {:?}", retrieved_doc);
+        let snippet = snippet_generator.snippet_from_doc(&retrieved_doc);
+        println!("snippet: {:?}", snippet.to_html());
+        println!("custom highlighting: {}", highlight(snippet));
+        documents.push((score, retrieved_doc));
+    }
+    
+    Ok(documents)
+}
+
+pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument)>> {
+    let (index, schema) = get_index_schema().unwrap();
+    
+    let reader = index.reader()?;
+    let searcher = reader.searcher();
+    let body_field = schema.get_field("body").unwrap();
+    
+    let term = Term::from_field_text(body_field, query_str);
+    let query = FuzzyTermQuery::new(term, 2, true);
+
+    let (top_docs, count) = searcher.search(&query, &(TopDocs::with_limit(20), Count)).unwrap();
+    println!("Count {}", count);
     let mut documents = Vec::new();
     for (score, doc_address) in top_docs {
         let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
         documents.push((score, retrieved_doc));
     }
-    
-    Ok(documents)
+
+    Ok((documents))
+}
+
+fn highlight(snippet: Snippet) -> String {
+    let mut result = String::new();
+    let mut start_from = 0;
+
+    for fragment_range in snippet.highlighted() {
+        result.push_str(&snippet.fragment()[start_from..fragment_range.start]);
+        result.push_str(" --> ");
+        result.push_str(&snippet.fragment()[fragment_range.clone()]);
+        result.push_str(" <-- ");
+        start_from = fragment_range.end;
+    }
+
+    result.push_str(&snippet.fragment()[start_from..]);
+    result
 }

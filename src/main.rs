@@ -11,7 +11,7 @@ mod qmistral;
 use qmistral::run_qmistral;
 use std::collections::HashMap;
 mod tant;
-use tant::{tanttest, search_documents, insert_file, get_index_schema, get_num_documents};
+use tant::{fuzzy_search_documents, search_documents, insert_file, get_index_schema, get_num_documents};
 use tantivy::{Index, IndexReader, ReloadPolicy, TantivyDocument};
 
 // =====================================================================
@@ -104,7 +104,11 @@ fn main() -> anyhow::Result<()> {
     let num_docs = get_num_documents(&i)?;
     println!("Number of documents in the index: {}", num_docs);
 
-    let x = search_documents("healthcare").unwrap();
+    let x = search_documents("light").unwrap();
+    for (s, _d) in x {
+        println!("{}", s);
+    }
+    let x = fuzzy_search_documents("light").unwrap();
     for (s, _d) in x {
         println!("{}", s);
     }
@@ -237,6 +241,13 @@ fn main() -> anyhow::Result<()> {
     // Search for the nearest neighbours.
     if let Some(query) = &args.query {
         println!("Asking {}", &query);
+
+        /*
+        let x = search_documents(&query).unwrap();
+        for (s, d) in x {
+            println!("{} {:?}", s, d);
+        }
+        */
         
         let data = chunk_string(query, args.chunksize);
         //println!("{:?}", data); // Only if verbose!
