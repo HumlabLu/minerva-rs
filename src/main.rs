@@ -265,10 +265,6 @@ fn main() -> anyhow::Result<()> {
         let result = collection.search(&embedded_query, args.nearest).unwrap();
         //let result = collection.true_search(&embedded_query, args.nearest).unwrap();
 
-        let mut context_str = String::new();
-        if result.len() == 0 {
-        }
-        
         for res in &result {
             let hm = md_to_hashmap(&res.data).unwrap();
             let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
@@ -281,7 +277,8 @@ fn main() -> anyhow::Result<()> {
                 println!(" | filtered");
             }
         }
-        
+
+        let mut context_str = String::new();
         let result: Vec<SearchResult> = result.into_iter().filter(|s| s.distance < args.maxdist).collect();
         if result.len() == 0 && keyword_context.len() == 0 {
             println!("All results have been filtered :-(");
