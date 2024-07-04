@@ -240,15 +240,18 @@ fn main() -> anyhow::Result<()> {
     }
 
     // This searches in the tantivy database.
+    let mut keyword_context = String::new();
     if let Some(keyword) = &args.keyword {
         println!("Keyword {}", &keyword);
 
         let x = search_documents(&keyword).unwrap();
         for (s, _d, snippet) in x {
-            println!("{:?}", snippet.fragment());
+            //println!("{:?}", snippet.fragment());
+            keyword_context += snippet.fragment()
         }
     }
-        
+    println!("{}", keyword_context);
+    
     // Search for the nearest neighbours.
     if let Some(query) = &args.query {
         println!("Asking {}", &query);
@@ -284,7 +287,8 @@ fn main() -> anyhow::Result<()> {
         if result.len() == 0 {
             println!("All results have been filtered :-(");
         }
-
+        context_str += &keyword_context;
+        
         // Double, cache the results in the first iteration.
         let mut sep = "";
         for res in &result {
