@@ -13,6 +13,7 @@ use std::collections::HashMap;
 mod tant;
 use tant::{fuzzy_search_documents, search_documents, insert_file, get_index_schema, get_num_documents};
 use tantivy::{Index, IndexReader, ReloadPolicy, TantivyDocument};
+use tantivy::schema::OwnedValue;
 
 // =====================================================================
 // Command line arguments.
@@ -36,6 +37,9 @@ struct Args {
 
     #[arg(short, long, help = "Directory with text files.")]
     pub dirname: Option<String>,
+
+    #[arg(short, long, help = "Directory with text files for tantivy database.")]
+    pub tantdirname: Option<String>,
 
     #[arg(short, long, help = "Maximum distance.", default_value_t = 0.6500)]
     pub maxdist: f32,
@@ -147,9 +151,6 @@ fn main() -> anyhow::Result<()> {
             let filename_str = filename.clone().into_os_string().into_string().unwrap();
             print!("Reading {}", filename_str); // Check extension here maybe...
 
-            // Add to tantivy database here as well.
-            let _ = insert_file(&index, &filename);
-            
             // Should check extension...
             let chunked_data = Some(embed_file_txt(filename, args.chunksize).expect("File does not exist?"));
             
@@ -174,7 +175,18 @@ fn main() -> anyhow::Result<()> {
         // And make it persistent.
         db.save_collection(&args.collection, &collection).unwrap();
     }
-    
+
+    if let Some(dirname) = &args.tantdirname {
+        let filenames = read_dir_contents(dirname).unwrap();
+        let (index, schema) = get_index_schema().unwrap();
+        for filename in filenames {
+            let filename_str = filename.clone().into_os_string().into_string().unwrap();
+            print!("Reading {}...", filename_str); // Check extension here maybe...
+            let num = insert_file(&index, &filename).unwrap();
+            println!("added {}.", num);
+        }
+    }
+            
     if let Some(filename) = &args.filename {
         let path = Path::new(filename);
         let mut chunked_data: Option<Vec<String>> = None;
@@ -245,9 +257,18 @@ fn main() -> anyhow::Result<()> {
         println!("Keyword {}", &keyword);
 
         let x = search_documents(&keyword).unwrap();
-        for (s, _d, snippet) in x {
+        for (s, d, snippet) in x {
             //println!("{:?}", snippet.fragment());
-            keyword_context += snippet.fragment()
+            //keyword_context += snippet.fragment()
+            //println!("{:?}", d.field_values()[1].value);
+            //keyword_context += d.field_values()[1].value.as_text().unwrap_or(""); //.as_str().unwrap();
+            keyword_context += match &d.field_values()[1].value {
+                OwnedValue::Str(s) => s,
+                _ => {
+                    println!("Warning: Expected text field, found different type");
+                    ""
+                }
+            };
         }
     }
     println!("{}", keyword_context);

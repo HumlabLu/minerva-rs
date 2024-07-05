@@ -7,6 +7,7 @@ use std::path::Path;
 use tantivy::snippet::{Snippet, SnippetGenerator};
 use once_cell::sync::Lazy;
 use std::fs;
+use crate::embedder::{chunk_string};
 
 static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     let mut schema_builder = Schema::builder();
@@ -20,7 +21,7 @@ static SCHEMA: Lazy<Schema> = Lazy::new(|| {
 
 // Insert the four main fields, and calculate the body_hash
 // from the body text.
-pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64, chunk_number: u64) -> tantivy::Result<()> {
+pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64, chunk_number: u64) -> tantivy::Result<(bool)> {
     let schema = index.schema();
     let mut index_writer: IndexWriter = index.writer(50_000_000)?;
     
@@ -36,7 +37,7 @@ pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64,
     match document_exists(&index, &hash_body_value.to_string()) {
         Ok(exists) => {
             if ! exists {
-                println!("Adding document.");
+                //println!("Adding document.");
                 let _ = index_writer.add_document(doc!(
                     title_field => title,
                     body_field => body,
@@ -45,13 +46,16 @@ pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64,
                     hash_body_field => hash_body_value.to_string()
                 ));
                 index_writer.commit()?;
-                println!("Added.");
+                return Ok(true);
+                //println!("Added.");
+            } else {
+                return Ok(false);
             }
         }
         Err(e) => println!("Error occurred: {:?}", e)
     }
         
-    Ok(())
+    Ok(false)
 }
 
 // Takes ownership of the doc!
@@ -99,15 +103,24 @@ pub fn get_index_schema() -> tantivy::Result<(Index, Schema)> {
 
 // index should be a parameter, because we want to know where
 // we store it the document.
-pub fn insert_file<P: AsRef<Path>>(index: &Index, path: P) -> tantivy::Result<()> {
+pub fn insert_file<P: AsRef<Path>>(index: &Index, path: P) -> tantivy::Result<(u64)> {
     let path_ref = path.as_ref();
     let filename_str = path_ref.to_str().ok_or_else(|| {
         tantivy::TantivyError::InvalidArgument(format!("Invalid path: {:?}", path_ref))
     })?;
     let contents = fs::read_to_string(path_ref).expect("Cannot read file.");
 
-    let _ = insert_document(&index, filename_str, &contents, 0, 0)?;
-    Ok(())
+    let chunks = chunk_string(&contents, 2048); // Arbitrary value.
+    let mut chunk_counter = 0u64;
+    for chunk in chunks {
+        let inserted = insert_document(&index, filename_str, &chunk, 0, chunk_counter).unwrap();
+        //println!("Inserted chunk {}", chunk_counter);
+        if inserted {
+            chunk_counter += 1;
+        }
+    }
+    
+    Ok(chunk_counter)
 }
 
 // Needs testing/work.
@@ -311,7 +324,7 @@ pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, Tant
     let term = Term::from_field_text(body_field, query_str);
     let query = FuzzyTermQuery::new(term, 2, true);
 
-    let (top_docs, count) = searcher.search(&query, &(TopDocs::with_limit(20), Count)).unwrap();
+    let (top_docs, count) = searcher.search(&query, &(TopDocs::with_limit(3), Count)).unwrap();
     println!("Count {}", count);
     let mut documents = Vec::new();
     for (score, doc_address) in top_docs {
