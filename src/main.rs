@@ -112,11 +112,12 @@ fn main() -> anyhow::Result<()> {
     let num_docs = get_num_documents(&i)?;
     println!("Number of documents in the index: {}", num_docs);
 
+    /*
     let x = fuzzy_search_documents("light").unwrap();
     for (s, _d) in x {
         println!("{}", s);
     }
-
+    */
     // _ = load_model();
     
     // This is the saved DB, containing different collections.
@@ -257,10 +258,10 @@ fn main() -> anyhow::Result<()> {
         println!("Keyword {}", &keyword);
 
         let x = search_documents(&keyword).unwrap();
-        for (s, d, snippet) in x {
+        for (s, d, _snippet) in x {
             //println!("{:?}", snippet.fragment());
             //keyword_context += snippet.fragment()
-            //println!("{:?}", d.field_values()[1].value);
+            //println!("{:?}", d.field_values()[1].value.as_str().unwrap());
             //keyword_context += d.field_values()[1].value.as_text().unwrap_or(""); //.as_str().unwrap();
             keyword_context += match &d.field_values()[1].value {
                 OwnedValue::Str(s) => s,
@@ -341,10 +342,15 @@ fn main() -> anyhow::Result<()> {
         // ---
         
         let _ts_start = chrono::Local::now();
-        let q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+        let mut q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+        if q.len() > 4096 {
+            println!("Prompt longer than 4096, truncating.");
+            q = q[0..4096].to_string();
+        }
         if args.showprompt == true {
             println!("\n{}\n", q);
         }
+       
         //let q = format!("{question}", question=query);
         //let q = format!("Du är en vänlig och hjälpsam AI-assistent. Ditt svar ska vara kortfattat och använda sammanhanget om möjligt. Skriv ut namnet på det dokument som används från sammanhanget. Upprepa inte frågan eller referenserna. Svara på Svenska! Idag är det {date}. Sammanhang: {context}. Fråga: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
         let ans = run_qmistral(&q);

@@ -281,7 +281,7 @@ Longer string.", 1, 1)?;
     Ok(())
 }
 
-pub fn search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument, Snippet)>> {
+pub fn search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>> {
     let index_path = Path::new("db/tantivy");
     
     let schema = &*SCHEMA;  // Ensure SCHEMA is defined and available in scope
@@ -308,13 +308,13 @@ pub fn search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDoc
         let snippet = snippet_generator.snippet_from_doc(&retrieved_doc);
         //println!("snippet: {:?}", snippet.to_html());
         //println!("custom highlighting: {}", highlight(&snippet));
-        documents.push((score, retrieved_doc, snippet));
+        documents.push((score, retrieved_doc, Some(snippet)));
     }
     
     Ok(documents)
 }
 
-pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument)>> {
+pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>> {
     let (index, schema) = get_index_schema().unwrap();
     
     let reader = index.reader()?;
@@ -329,7 +329,7 @@ pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, Tant
     let mut documents = Vec::new();
     for (score, doc_address) in top_docs {
         let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
-        documents.push((score, retrieved_doc));
+        documents.push((score, retrieved_doc, None)); // No snippets in fuzzy search.
     }
 
     Ok(documents)
