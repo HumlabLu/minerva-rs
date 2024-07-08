@@ -24,35 +24,64 @@ We have a cat called Sirius. We have another cat called Maja. We refers to Peter
 % cargo run --release -- --chunksize 32 -f texts/facts.txt
 
 % cargo run --release -- -q "How many cats does Peter have?"
-Args { filename: None, chunksize: 512, collection: "vectors", dirname: None, knearest: 3, query: Some("How many cats does Peter have?"), verbose: false, command: None }
+pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "How many cats does Peter have?" -m 0.75
+    Finished `release` profile [optimized] target(s) in 0.15s
+     Running `target/release/minerva-rs -q 'How many cats does Peter have?' -m 0.75`
+Args { filename: None, chunksize: 1024, collection: "vectors", dirname: None, tantdirname: None, maxdist: 0.75, nearest: 3, query: Some("How many cats does Peter have?"), keyword: None, verbose: false, showprompt: false, showcontext: false, command: None }
+Embedding dim 384
+Number of documents in the index: 0
 DB contains 1 collections.
 Size of collection 5.
+
 Asking How many cats does Peter have?
+0.7070 | texts/facts.txt/1 *
+0.7257 | texts/facts.txt/2 *
+0.7490 | texts/facts.txt/0 *
 Model TheBloke/Mistral-7B-Instruct-v0.2-GGUF | mistral-7b-instruct-v0.2.Q5_K_M.gguf
 Device Cpu
 loaded 291 tensors (5.13GB) in 0.06s
 model built
 model::MAX_SEQ_LEN 4096
-[INST] You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Print the name of document used from the context. Do not repeat the question or references. Today is Wednesday, May 15, 2024. Context:
-(document:"texts/facts.txt/1", with contents:We have another cat called Maja.),
-(document:"texts/facts.txt/2", with contents:We refers to Peter and Elisabet.),
-(document:"texts/facts.txt/0", with contents:We have a cat called Sirius.).
-Question: How many cats does Peter have?. [/INST]
+Prompt length 177, pre-processing...
 
-Based on the context provided, Peter and Elisabet have a cat named Sirius (from facts.txt/0),
-and they also have another cat named Maja (from facts.txt/1). Therefore,
-Peter has a total of two cats.
+According to the facts given in the "texts/facts.txt" document, Peter and Elisabet have a cat called Sirius (document: "texts/facts.txt/0") and another cat named Maja (document: "texts/facts.txt/1"). Therefore, Peter has a total of two cats.
 ```
 
 ### Example 2 -- Larger Chunks
 
 ```shell
-cargo run --release -- -f facts.txt
-Args { filename: Some("facts.txt"), chunksize: 512, collection: "vectors", dirname: None, knearest: 3, query: None, verbose: false, showprompt: false, showcontext: false, command: None }
+pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -f texts/facts.txt
+    Finished `release` profile [optimized] target(s) in 0.16s
+     Running `target/release/minerva-rs -f texts/facts.txt`
+Args { filename: Some("texts/facts.txt"), chunksize: 1024, collection: "vectors", dirname: None, tantdirname: None, maxdist: 0.65, nearest: 3, query: None, keyword: None, verbose: false, showprompt: false, showcontext: false, command: None }
 Embedding dim 384
+Number of documents in the index: 0
 DB contains 1 collections.
+Chunking text file.
+Creating embeddings.
+Storing embeddings.
 Added 1 items
 Size of collection 1.
+
+pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "Where is Peter's cat?"
+    Finished `release` profile [optimized] target(s) in 0.15s
+     Running `target/release/minerva-rs -q 'Where is Peter'\''s cat?'`
+Args { filename: None, chunksize: 1024, collection: "vectors", dirname: None, tantdirname: None, maxdist: 0.65, nearest: 3, query: Some("Where is Peter's cat?"), keyword: None, verbose: false, showprompt: false, showcontext: false, command: None }
+Embedding dim 384
+Number of documents in the index: 0
+DB contains 1 collections.
+Size of collection 1.
+
+Asking Where is Peter's cat?
+0.6011 | texts/facts.txt/0 *
+Model TheBloke/Mistral-7B-Instruct-v0.2-GGUF | mistral-7b-instruct-v0.2.Q5_K_M.gguf
+Device Cpu
+loaded 291 tensors (5.13GB) in 0.06s
+model built
+model::MAX_SEQ_LEN 4096
+Prompt length 169, pre-processing...
+
+Peter has two cats named Sirius and Maja. According to the context from the document "facts.txt/0", they live in Rörums Holma, which is located in Skåne, Sweden. So, Peter's cats are in Rörums Holma, Skåne, Sweden.
 
 cargo run --release -- -q "How many cats does Peter have?"
 Embedding dim 384
@@ -68,11 +97,6 @@ model::MAX_SEQ_LEN 4096
 Prompt length 156, pre-processing...
 
 > Peter has two cats, Sirius and Maja. (Referenced document: facts.txt/0)
-
-cargo run --release -- -q "Where is Peter's cat?"
-> Peter has two cats named Sirius and Maja. Based on the context,
-> they live in Rörums Holma, which is located in Skåne, Sweden.
-> So, Peter's cats are in Sweden at Rörums Holma. (facts.txt/0)
 
 cargo run --release -- -q "Is Peter's cat called Nisse?"
 > No, according to the given document "facts.txt/0",
