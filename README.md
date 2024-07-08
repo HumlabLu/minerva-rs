@@ -1,5 +1,15 @@
 # Minerva
 
+## Intro
+
+Simple RAG system written in Rust. It uses `fastembed-rs` to create
+embeddings for the vector database. The vector database is implemented
+using `oasysdb`. Texts are split into chunks using `text-splitter`. The
+Candle library is used to run the models (which can be downloaded from
+huggingface).
+
+The system runs locally, no data is uploaded or stored online.
+
 ## Notes
 
  - Needs a HF token!
