@@ -140,7 +140,7 @@ Sirius is at Rörums Holma in Skåne, Sweden.
 
 Without the context.
 ```shell
-pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "Where is Sirius?" -k0
+pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "Where is Sirius?" -n0
 [INST] You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not repeat the question or references. Today is Thursday, May  9, 2024. Context: Use any knowledge you have.. Question: Where is Sirius?. [/INST]
 
   68 prompt tokens processed: 13.20 token/s
@@ -252,10 +252,27 @@ Size of collection 8.
 ## Minerva
 
 ```shell
-cargo run -q --release -- -q "Who was Minerva? Reference Roman mythology." -k0
+cargo run -q --release -- -q "Who was Minerva? Reference Roman mythology." -n0
+Args { filename: None, chunksize: 1024, collection: "vectors", dirname: None, tantdirname: None, maxdist: 0.65, nearest: 0, query: Some("Who was Minerva? Reference Roman mythology."), keyword: None, verbose: false, showprompt: false, showcontext: false, command: None }
+Embedding dim 384
+Number of documents in the index: 0
+DB contains 1 collections.
+Size of collection 1.
 
-  74 prompt tokens processed: 16.50 token/s
-  72 tokens generated: 10.87 token/s
-TimeDelta { secs: 12, nanos: 473691000 }
-"Minerva was the goddess of wisdom, warfare, strategy, and crafts in Roman mythology. She is often portrayed as a helmeted woman holding a spear and shield in one hand and a spindle in the other. She was also known for her ability to grant wisdom and strategic planning to those who needed it most."
+Asking Who was Minerva? Reference Roman mythology.
+All results have been filtered :-(
+Model TheBloke/Mistral-7B-Instruct-v0.2-GGUF | mistral-7b-instruct-v0.2.Q5_K_M.gguf
+Device Cpu
+loaded 291 tensors (5.13GB) in 0.06s
+model built
+model::MAX_SEQ_LEN 4096
+Prompt length 99, pre-processing...
+
+Minerva was the Roman goddess of wisdom, strategic warfare, and crafts. She is
+equivalent to the Greek goddess Athena. According to Roman mythology, she was
+born fully grown from the forehead of Jupiter (the Roman equivalent of Zeus)
+when he had a thunderbolt headache caused by the god Neptune striking the ground
+with his trident in anger. Minerva is often depicted as wearing a helmet adorned
+with olive leaves and carrying a spear, a shield, or an owl.
+(Reference: Encyclopedia Britannica)
 ```
