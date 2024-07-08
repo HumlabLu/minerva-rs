@@ -1,7 +1,7 @@
 use tantivy::collector::{TopDocs, Count};
 use tantivy::query::{QueryParser, TermQuery, FuzzyTermQuery};
 use tantivy::schema::*;
-use tantivy::{doc, Index, IndexReader, IndexWriter, ReloadPolicy};
+use tantivy::{doc, Index, IndexWriter, ReloadPolicy};
 use tantivy::directory::MmapDirectory;
 use std::path::Path;
 use tantivy::snippet::{Snippet, SnippetGenerator};
@@ -21,7 +21,7 @@ static SCHEMA: Lazy<Schema> = Lazy::new(|| {
 
 // Insert the four main fields, and calculate the body_hash
 // from the body text.
-pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64, chunk_number: u64) -> tantivy::Result<(bool)> {
+pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64, chunk_number: u64) -> tantivy::Result<bool> {
     let schema = index.schema();
     let mut index_writer: IndexWriter = index.writer(50_000_000)?;
     
@@ -59,6 +59,7 @@ pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64,
 }
 
 // Takes ownership of the doc!
+#[allow(dead_code)]
 pub fn insert_doc(index: &Index, mut tdoc: TantivyDocument) -> tantivy::Result<()> {
     let mut index_writer: IndexWriter = index.writer(50_000_000)?;
 
@@ -103,7 +104,7 @@ pub fn get_index_schema() -> tantivy::Result<(Index, Schema)> {
 
 // index should be a parameter, because we want to know where
 // we store it the document.
-pub fn insert_file<P: AsRef<Path>>(index: &Index, path: P) -> tantivy::Result<(u64)> {
+pub fn insert_file<P: AsRef<Path>>(index: &Index, path: P) -> tantivy::Result<u64> {
     let path_ref = path.as_ref();
     let filename_str = path_ref.to_str().ok_or_else(|| {
         tantivy::TantivyError::InvalidArgument(format!("Invalid path: {:?}", path_ref))
@@ -314,6 +315,7 @@ pub fn search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDoc
     Ok(documents)
 }
 
+#[allow(dead_code)]
 pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>> {
     let (index, schema) = get_index_schema().unwrap();
     
@@ -335,6 +337,7 @@ pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, Tant
     Ok(documents)
 }
 
+#[allow(dead_code)]
 fn highlight(snippet: &Snippet) -> String {
     let mut result = String::new();
     let mut start_from = 0;

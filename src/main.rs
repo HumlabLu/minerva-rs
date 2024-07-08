@@ -11,8 +11,7 @@ mod qmistral;
 use qmistral::run_qmistral;
 use std::collections::HashMap;
 mod tant;
-use tant::{fuzzy_search_documents, search_documents, insert_file, get_index_schema, get_num_documents};
-use tantivy::{Index, IndexReader, ReloadPolicy, TantivyDocument};
+use tant::{search_documents, insert_file, get_index_schema, get_num_documents};
 use tantivy::schema::OwnedValue;
 
 // =====================================================================
@@ -108,7 +107,7 @@ fn main() -> anyhow::Result<()> {
     println!("Embedding dim {}", get_embedding_dim().unwrap());
 
     //_ = tanttest();
-    let (i, s) = get_index_schema().unwrap();
+    let (i, _s) = get_index_schema().unwrap();
     let num_docs = get_num_documents(&i)?;
     println!("Number of documents in the index: {}", num_docs);
 
@@ -147,7 +146,6 @@ fn main() -> anyhow::Result<()> {
     if let Some(dirname) = &args.dirname {
         let mut records = vec![];
         let filenames = read_dir_contents(dirname).unwrap();
-        let (index, schema) = get_index_schema().unwrap();
         for filename in filenames {
             let filename_str = filename.clone().into_os_string().into_string().unwrap();
             print!("Reading {}", filename_str); // Check extension here maybe...
@@ -179,7 +177,7 @@ fn main() -> anyhow::Result<()> {
 
     if let Some(dirname) = &args.tantdirname {
         let filenames = read_dir_contents(dirname).unwrap();
-        let (index, schema) = get_index_schema().unwrap();
+        let (index, _schema) = get_index_schema().unwrap();
         for filename in filenames {
             let filename_str = filename.clone().into_os_string().into_string().unwrap();
             print!("Reading {}...", filename_str); // Check extension here maybe...
@@ -258,7 +256,7 @@ fn main() -> anyhow::Result<()> {
         println!("Keyword {}", &keyword);
 
         let x = search_documents(&keyword).unwrap();
-        for (s, d, _snippet) in x {
+        for (_s, d, _snippet) in x {
             //println!("{:?}", snippet.fragment());
             //keyword_context += snippet.fragment()
             //println!("{:?}", d.field_values()[1].value.as_str().unwrap());
@@ -343,9 +341,9 @@ fn main() -> anyhow::Result<()> {
         
         let _ts_start = chrono::Local::now();
         let mut q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
-        if q.len() > 4096 {
+        if q.len() > 4096 { // Come to think of it, those might be tokens...
             println!("Prompt longer than 4096, truncating.");
-            q = q[0..4096].to_string();
+            q = q[0..=4095].to_string();
         }
         if args.showprompt == true {
             println!("\n{}\n", q);
