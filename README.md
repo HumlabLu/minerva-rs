@@ -44,7 +44,9 @@ model built
 model::MAX_SEQ_LEN 4096
 Prompt length 177, pre-processing...
 
-According to the facts given in the "texts/facts.txt" document, Peter and Elisabet have a cat called Sirius (document: "texts/facts.txt/0") and another cat named Maja (document: "texts/facts.txt/1"). Therefore, Peter has a total of two cats.
+According to the facts given in the "texts/facts.txt" document, Peter and Elisabet
+have a cat called Sirius (document: "texts/facts.txt/0") and another cat named Maja
+(document: "texts/facts.txt/1"). Therefore, Peter has a total of two cats.
 ```
 
 ### Example 2 -- Larger Chunks
@@ -81,7 +83,9 @@ model built
 model::MAX_SEQ_LEN 4096
 Prompt length 169, pre-processing...
 
-Peter has two cats named Sirius and Maja. According to the context from the document "facts.txt/0", they live in Rörums Holma, which is located in Skåne, Sweden. So, Peter's cats are in Rörums Holma, Skåne, Sweden.
+Peter has two cats named Sirius and Maja. According to the context from the
+document "facts.txt/0", they live in Rörums Holma, which is located in Skåne,
+Sweden. So, Peter's cats are in Rörums Holma, Skåne, Sweden.
 
 cargo run --release -- -q "How many cats does Peter have?"
 Embedding dim 384
