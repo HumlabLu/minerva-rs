@@ -10,6 +10,10 @@ huggingface).
 
 The system runs locally, no data is uploaded or stored online.
 
+There is a second database, implemented using `tantivy`, which can store
+plain text documents which can be retrieved with a keyword
+search. This is still work in progress.
+
 ## Notes
 
  - Needs a HF token!
