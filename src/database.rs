@@ -39,7 +39,7 @@ pub fn data_to_record(emb: &Embedding, filename: &str, txt: &str, cnt: usize) ->
 
 pub fn get_db() -> Database {
     //let args = Args::parse(); // Should not be here, have function args instead.
-    let db = Database::open("data/test").unwrap();
+    let db = Database::open("db/oasys").unwrap();
     // let collection = db.get_collection("vectors").unwrap();
     println!("DB contains {} collections.", db.len());
     db

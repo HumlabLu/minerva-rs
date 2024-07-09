@@ -17,6 +17,15 @@ mod genaigen;
 use genaigen::genai_generate;
 
 // =====================================================================
+// Store multiple sizes, eg 256 nd 1024. Then search on the 256,
+// but return the longer 1024, so we get "more context", but also
+// more specific searching. (A poor man's version of returning the
+// chunks that come before and after the found chunk. (Or store
+// plus/minus chunks as well when creating chunks, there we have
+// all the info...
+// =====================================================================
+
+// =====================================================================
 // Command line arguments.
 // =====================================================================
 
