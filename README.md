@@ -16,8 +16,9 @@ search. This is still work in progress.
 
 ## Notes
 
- - Needs a HF token!
+ - Depending on the model, might need a HF token!
  - Code needs cleaning/improving.
+ - Tantivy DB integration needs work.
 
 ## Ubuntu
 
