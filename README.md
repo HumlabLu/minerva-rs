@@ -248,27 +248,24 @@ and influences weather patterns by distributing heat and shaping global air curr
 ```shell
 cargo run --release -- list
 
-[src/main.rs:68] &args = Args {
-    filename: None,
-    chunksize: 512,
-    collection: "vectors",
-    knearest: 2,
-    query: None,
-    verbose: false,
-    command: Some(
-        List,
-    ),
-}
+Embedding dim 384
+Number of documents in the tantivy database: 0
 DB contains 1 collections.
-Size of collection 8.
-    0 | Text("Water is a fundamental substance with unique properties that have profound implications for life on Earth, climate systems, and human society. Here are ten facts about water that highlight its importance and uniqueness:")
-    4 | Text("6. **The Water Cycle**: The water cycle describes the continuous movement of water on, above, and below the surface of the Earth, involving processes such as evaporation, condensation, precipitation, and runoff. This cycle is essential for distributing heat and sustaining ecosystems.")
-    3 | Text("4. **High Specific Heat Capacity**: Water has a high specific heat capacity, meaning it requires a lot of energy to change its temperature. This property helps regulate Earth's climate and the body temperatures of living organisms.\n\n5. **Cohesion and Surface Tension**: Water molecules are attracted to each other (cohesion), leading to a high surface tension. This allows insects to walk on water and plants to transport water from their roots to their leaves.")
-    5 | Text("7. **Distribution on Earth**: About 71% of the Earth's surface is covered with water, but 97.5% of that is saltwater, leaving only 2.5% as freshwater. Of this freshwater, the majority is locked in ice caps and glaciers, making less than 1% readily accessible for human use.\n\n8. **Critical for Life**: Water is essential for all known forms of life. It serves as a solvent for biological reactions, a medium for transporting nutrients and waste, and plays a key role in regulating temperature.")
-    7 | Text("These facts underscore water's critical role in sustaining life, shaping climates, and influencing human societies. The study of water and its management is central to environmental science, ecology, and global sustainability efforts.")
-    6 | Text("9. **Human Use and Access**: While water is abundant on Earth, access to clean, fresh water is not evenly distributed. Many regions face water scarcity, affecting billions of people and leading to health, agricultural, and economic issues.\n\n10. **Impact on Climate**: Water vapour is a significant greenhouse gas, contributing to the greenhouse effect. The distribution and temperature of water bodies also influence weather patterns and climate systems globally.")
-    2 | Text("2. **Universal Solvent**: Due to its polarity, water is known as the \"universal solvent\" because it can dissolve more substances than any other liquid. This property is crucial for the biochemical processes of living organisms.\n\n3. **Density and Ice Formation**: Uniquely, water expands and becomes less dense as it freezes. Ice has a lower density than liquid water, which is why ice floats. This anomaly is vital for aquatic life in cold climates, as the ice layer insulates the water below and maintains a habitable environment.")
-    1 | Text("1. **Chemical Structure and Polarity**: Water (H2O) has a simple molecular structure consisting of two hydrogen atoms bonded to one oxygen atom. This arrangement gives water a polar nature, with a partial positive charge near the hydrogen atoms and a partial negative charge near the oxygen, enabling it to dissolve many substances.")
+Size of vector database 5.
+    4/"01J2B1FRMNARAGT84H6NRAQNSK"/"20240709T0804"/"texts/water.txt"/"3"
+"10. **Impact on Climate**: Water vapour is a significant greenhouse gas, ..."
+
+    2/"01J2B1FRMNFXEGHRT6WZH5PXBS"/"20240709T0804"/"texts/water.txt"/"1"
+"3. **Density and Ice Formation**: Uniquely, water expands and becomes less ..."
+
+    0/"01J29B9S4B8Z4GFBYYSG1GDZ10"/"20240708T1617"/"texts/facts.txt"/"0"
+"We have a cat called Sirius. We have another cat called Maja. We refers to ..."
+
+    3/"01J2B1FRMN9AXZVTPFSHQ89NBH"/"20240709T0804"/"texts/water.txt"/"2"
+"6. **The Water Cycle**: The water cycle describes the continuous movement of ..."
+
+    1/"01J2B1FRMNKVZKE3K9HTP3YJ89"/"20240709T0804"/"texts/water.txt"/"0"
+"Water is a fundamental substance with unique properties that have profound ..."
 ```
 
 ## Minerva
