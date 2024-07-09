@@ -69,6 +69,9 @@ struct Args {
     #[arg(long, short, action, help = "Use Ollama for generation.")]
     pub ollama: bool,
 
+    #[arg(long, short = 'O', default_value = "mistral", help = "Ollama model to use.")]
+    pub ollama_model: String,
+
     // Extra output
     #[arg(long, short, action, help = "Produce superfluous output.")]
     pub verbose: bool,
@@ -365,7 +368,7 @@ fn main() -> anyhow::Result<()> {
                 println!("\n{}\n", sys_message);
             }
 
-            let _ = genai_generate(&sys_message, &q);
+            let _ = genai_generate(&sys_message, &q, &args.ollama_model);
         }
     }
 

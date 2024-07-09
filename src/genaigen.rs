@@ -2,10 +2,10 @@ use genai::chat::{ChatMessage, ChatRequest};
 use genai::client::Client;
 use genai::utils::{print_chat_stream, PrintChatStreamOptions};
 
-const MODEL_OLLAMA: &str = "mistral"; //"gpt-3.5-turbo"; 
+//const MODEL_OLLAMA: &str = "mistral"; //"gpt-3.5-turbo"; 
 
 #[tokio::main]
-pub async fn genai_generate(sys_msg: &str, question: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn genai_generate(sys_msg: &str, question: &str, model: &str) -> Result<(), Box<dyn std::error::Error>> {
     
     let chat_req = ChatRequest::new(vec![
 	// -- Messages (de/activate to see the differences)
@@ -16,7 +16,7 @@ pub async fn genai_generate(sys_msg: &str, question: &str) -> Result<(), Box<dyn
     let client = Client::default();
     let print_options = PrintChatStreamOptions::from_stream_events(false);
     
-    let model = MODEL_OLLAMA;
+    //let model = MODEL_OLLAMA;
     let adapter_kind = client.resolve_adapter_kind(model)?;
     
     println!("\nmodel {model} | {adapter_kind}");
