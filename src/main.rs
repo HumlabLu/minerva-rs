@@ -23,46 +23,46 @@ use tantivy::schema::OwnedValue;
 #[command(about = "Minerva is a RAG", long_about = None)]
 struct Args {
     // Filename
-    #[arg(short, long, help = "The file... but what is it?")]
+    #[arg(short, long, help = "The file to add to the vector database.")]
     pub filename: Option<String>, // Path thingy?
 
     // Chunk size
-    #[clap(long, action, default_value_t = 1024, help = "Chunk size in characters.")]
+    #[clap(long, action, default_value_t = 1024, help = "Chunk size (characters) for vectors.")]
     pub chunksize: usize,
 
     // Name of the database (collection)
     #[arg(long, default_value = "vectors", help = "Name of the database collection.")]
     pub collection: String,
 
-    #[arg(short, long, help = "Directory with text files.")]
+    #[arg(short, long, help = "Directory with text files to add to the vector database.")]
     pub dirname: Option<String>,
 
-    #[arg(short, long, help = "Directory with text files for tantivy database.")]
+    #[arg(short, long, help = "Directory with text files to add to the tantivy database.")]
     pub tantdirname: Option<String>,
 
-    #[arg(short, long, help = "Maximum distance.", default_value_t = 0.6500)]
+    #[arg(short, long, help = "Maximum distance between vectors.", default_value_t = 0.6500)]
     pub maxdist: f32,
 
     // The k-nearest neighbours.
-    #[clap(short, long, action, default_value_t = 3, help = "The k-nearest neighbours.")]
+    #[clap(short, long, action, default_value_t = 3, help = "The k-nearest neighbours when retreiving vectors.")]
     pub nearest: usize,
 
     // Query
-    #[arg(short, long, help = "Question?")]
+    #[arg(short, long, help = "The question to answer by the system.")]
     pub query: Option<String>,
 
     // Keyword
-    #[arg(short, long, help = "Keyword")]
+    #[arg(short, long, help = "Keyword to search for in the tantivy database.")]
     pub keyword: Option<String>,
 
     // Extra output
     #[arg(long, short, action, help = "Produce superfluous output.")]
     pub verbose: bool,
 
-    #[arg(long, action, help = "Show prompt.")]
+    #[arg(long, action, help = "Show the prompt.")]
     pub showprompt: bool,
     
-    #[arg(long, action, help = "Show context.")]
+    #[arg(long, action, help = "Show the context.")]
     pub showcontext: bool,
 
     #[command(subcommand)]
