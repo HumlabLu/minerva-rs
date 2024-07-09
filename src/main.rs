@@ -13,6 +13,8 @@ use std::collections::HashMap;
 mod tant;
 use tant::{search_documents, insert_file, get_index_schema, get_num_documents};
 use tantivy::schema::OwnedValue;
+mod genaigen;
+use genaigen::genai_generate;
 
 // =====================================================================
 // Command line arguments.
@@ -107,6 +109,9 @@ fn main() -> anyhow::Result<()> {
     }
     println!("Embedding dim {}", get_embedding_dim().unwrap());
 
+    // test
+    //genai_generate("Why is the sky blue?");
+    
     //_ = tanttest();
     let (i, _s) = get_index_schema().unwrap();
     let num_docs = get_num_documents(&i)?;
@@ -356,6 +361,12 @@ fn main() -> anyhow::Result<()> {
         let _ts_end = chrono::Local::now();
         //println!("{:?}", ts_end - ts_start);
         println!("\n{}", ans.unwrap().trim().to_string());
+
+        // We create a system message and a qustion.
+        let sys_message = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context}", context=context_str, date=chrono::Local::now().format("%A, %B %e, %Y"));
+
+        let q = format!("Question: {question}", question=query);
+        let _ = genai_generate(&sys_message, &q);
     }
 
     Ok(())

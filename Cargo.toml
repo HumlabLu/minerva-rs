@@ -30,6 +30,7 @@ tantivy = "0.22.0"
 tempfile = "3.10.1"
 text-splitter = "0.12.3"
 tokenizers = "0.19.1"
+tokio = "1.38.0"
 tqdm = "0.7.0"
 ulid = "1.1.2"
 
