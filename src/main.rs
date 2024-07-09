@@ -76,10 +76,10 @@ struct Args {
     #[arg(long, short, action, help = "Produce superfluous output.")]
     pub verbose: bool,
 
-    #[arg(long, action, help = "Show the prompt.")]
+    #[arg(short = 'p', long, action, help = "Show the prompt.")]
     pub showprompt: bool,
     
-    #[arg(long, action, help = "Show the context.")]
+    #[arg(short = 'c', long, action, help = "Show the context.")]
     pub showcontext: bool,
 
     #[command(subcommand)]
