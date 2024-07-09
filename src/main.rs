@@ -57,6 +57,9 @@ struct Args {
     #[arg(short, long, help = "Keyword to search for in the tantivy database.")]
     pub keyword: Option<String>,
 
+    #[arg(long, short, action, help = "Use Ollama for generation.")]
+    pub ollama: bool,
+
     // Extra output
     #[arg(long, short, action, help = "Produce superfluous output.")]
     pub verbose: bool,
@@ -328,45 +331,31 @@ fn main() -> anyhow::Result<()> {
             sep = ", ";
         }
 
-        // ---
-
-        // Try textgen as well.
-        /*
-        ERROR: Unable to load model: request error: https://huggingface.co/AI-Sweden-Models/gpt-sw3-6.7b-v2-instruct-gguf/resolve/main/tokenizer.json: status code 404
-
-        Caused by:
-        https://huggingface.co/AI-Sweden-Models/gpt-sw3-6.7b-v2-instruct-gguf/resolve/main/tokenizer.json: status code 404
-        */
-        /*
-        let mut string_context = vec![];
-        let ans = generate_answer(&query, &string_context);
-        println!("{:?}", ans.unwrap().trim().to_string());
-        */
-        
-        // ---
-        
         let _ts_start = chrono::Local::now();
-        let mut q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
-        if q.len() > 4096 { // Come to think of it, those might be tokens...
-            println!("Prompt longer than 4096, truncating.");
-            q = q[0..=4095].to_string();
-        }
-        if args.showprompt == true {
-            println!("\n{}\n", q);
-        }
-       
-        //let q = format!("{question}", question=query);
-        //let q = format!("Du är en vänlig och hjälpsam AI-assistent. Ditt svar ska vara kortfattat och använda sammanhanget om möjligt. Skriv ut namnet på det dokument som används från sammanhanget. Upprepa inte frågan eller referenserna. Svara på Svenska! Idag är det {date}. Sammanhang: {context}. Fråga: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
-        let ans = run_qmistral(&q);
-        let _ts_end = chrono::Local::now();
-        //println!("{:?}", ts_end - ts_start);
-        println!("\n{}", ans.unwrap().trim().to_string());
 
-        // We create a system message and a qustion.
-        let sys_message = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context}", context=context_str, date=chrono::Local::now().format("%A, %B %e, %Y"));
-
-        let q = format!("Question: {question}", question=query);
-        let _ = genai_generate(&sys_message, &q);
+        if args.ollama == false {
+            let mut q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+            if q.len() > 4096 { // Come to think of it, those might be tokens...
+                println!("Prompt longer than 4096, truncating.");
+                q = q[0..=4095].to_string();
+            }
+            if args.showprompt == true {
+                println!("\n{}\n", q);
+            }
+            
+            //let q = format!("{question}", question=query);
+            //let q = format!("Du är en vänlig och hjälpsam AI-assistent. Ditt svar ska vara kortfattat och använda sammanhanget om möjligt. Skriv ut namnet på det dokument som används från sammanhanget. Upprepa inte frågan eller referenserna. Svara på Svenska! Idag är {date}. Sammanhang: {context}. Fråga: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
+            let ans = run_qmistral(&q);
+            let _ts_end = chrono::Local::now();
+            //println!("{:?}", ts_end - ts_start);
+            println!("\n{}", ans.unwrap().trim().to_string());
+        } else {
+            // We create a system message and a qustion.
+            let sys_message = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context}", context=context_str, date=chrono::Local::now().format("%A, %B %e, %Y"));
+            
+            let q = format!("Question: {question}", question=query);
+            let _ = genai_generate(&sys_message, &q);
+        }
     }
 
     Ok(())
