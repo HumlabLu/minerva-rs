@@ -102,14 +102,15 @@ fn md_to_str(metadata: &Metadata) -> Option<String> {
 fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
-    println!("{:?}", &args);
-
+    if args.verbose {
+        println!("{:?}", &args);
+    }
     println!("Embedding dim {}", get_embedding_dim().unwrap());
 
     //_ = tanttest();
     let (i, _s) = get_index_schema().unwrap();
     let num_docs = get_num_documents(&i)?;
-    println!("Number of documents in the index: {}", num_docs);
+    println!("Number of documents in the tantivy database: {}", num_docs);
 
     /*
     let x = fuzzy_search_documents("light").unwrap();
@@ -222,7 +223,7 @@ fn main() -> anyhow::Result<()> {
             db.save_collection(&args.collection, &collection).unwrap();
         }
     }
-    println!("Size of collection {}.", collection.len());
+    println!("Size of vector database {}.", collection.len());
     
     // Shouldn't really mix --parameters and commands...
     match args.command {
@@ -274,7 +275,7 @@ fn main() -> anyhow::Result<()> {
     
     // Search for the nearest neighbours.
     if let Some(query) = &args.query {
-        println!("Asking {}", &query);
+        println!("Asking \"{}\"", &query);
         
         let data = chunk_string(query, args.chunksize);
         //println!("{:?}", data); // Only if verbose!

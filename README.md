@@ -165,42 +165,50 @@ TimeDelta { secs: 20, nanos: 721854000 }
 Sirius is the brightest star in the night sky, and it's part of the constellation Canis Major (The Greater Dog). You can locate it by finding the constellation Orion (identified by its distinctive "Square of Orion" asterism), then drawing a line from Betelgeuse, one of Orion's shoulders, to Bellatrix, another star in Orion. Sirius is located roughly where that line intersects with the Milky Way. Keep in mind that visibility of stars depends on various factors such as location, weather conditions, and time of year.
 ```
 
-## Add a text.
+## Workflow
+
+### Add a text.
 
 ```shell
 cargo run --release -- -f texts/water.txt
+
+Embedding dim 384
+Number of documents in the tantivy database: 0
+DB contains 1 collections.
+Chunking text file.
+Creating embeddings.
+Storing embeddings.
+Added 4 items
+Size of vector database 5.
 ```
 
+### Ask a question.
 
 ```shell
 cargo run -q --release -- -q "Write one sentence about water"
 
-[src/main.rs:68] &args = Args {
-    filename: None,
-    chunksize: 512,
-    collection: "vectors",
-    knearest: 2,
-    query: Some(
-        "Write  one sentence about water",
-    ),
-    verbose: false,
-    command: None,
-}
+Embedding dim 384
+Number of documents in the tantivy database: 0
 DB contains 1 collections.
-Size of collection 8.
-Asking Write  one sentence about water
+Size of vector database 5.
+
+Asking Write one sentence about water
+0.5036 | texts/water.txt/2 *
+0.5204 | texts/water.txt/0 *
+0.5407 | texts/water.txt/3 *
+Model TheBloke/Mistral-7B-Instruct-v0.2-GGUF | mistral-7b-instruct-v0.2.Q5_K_M.gguf
 Device Cpu
-loaded 291 tensors (4.37GB) in 0.06s
+loaded 291 tensors (5.13GB) in 0.06s
 model built
 model::MAX_SEQ_LEN 4096
-"/Users/pberck/.cache/huggingface/hub/models--mistralai--Mistral-7B-v0.1/snapshots/26bca36bde8333b5d7f72e9ed20ccda6a618af24/tokenizer.json"
-[INST] You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not repeat the question or references. Today is Wednesday, May  8, 2024. Context: Water is a fundamental substance with unique properties that have profound implications for life on Earth, climate systems, and human society. Here are ten facts about water that highlight its importance and uniqueness:These facts underscore water's critical role in sustaining life, shaping climates, and influencing human societies. The study of water and its management is central to environmental science, ecology, and global sustainability efforts.. Question: Write  one sentence about water. [/INST]
+Prompt length 656, pre-processing...
 
+Water, a universal solvent with a unique polar structure, is essential for all
+known forms of life and plays a crucial role in the functioning of ecosystems,
+climate systems, and human societies.
 
- 149 prompt tokens processed: 16.83 token/s
-  22 tokens generated: 10.47 token/s
-TimeDelta { secs: 12, nanos: 332276000 }
-"Water is a fundamental and unique substance that sustains life, shapes climates, and influences human societies."
+(No specific document used as the context provided multiple documents
+discussing water and its importance.)
 ```
 
 ## Ask another question.
