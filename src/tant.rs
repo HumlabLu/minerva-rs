@@ -21,6 +21,7 @@ static SCHEMA: Lazy<Schema> = Lazy::new(|| {
 
 // Insert the four main fields, and calculate the body_hash
 // from the body text.
+#[allow(dead_code)]
 pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64, chunk_number: u64) -> tantivy::Result<bool> {
     let schema = index.schema();
     let mut index_writer: IndexWriter = index.writer(50_000_000)?;
@@ -31,7 +32,11 @@ pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64,
     let chunk_number_field = schema.get_field("chunk_number").unwrap();
     let hash_body_field = schema.get_field("hash_body").unwrap();
 
-    let hash_body_value = blake3::hash(body.as_bytes());
+    //let hash_body_value = blake3::hash(body.as_bytes());
+    let hash_body_value_bytes = body.as_bytes();
+    //let hash_body_value_bytes = &hash_body_value_bytes[0..=255]; // Might be faster like this?
+    let hash_body_value = blake3::hash(hash_body_value_bytes);
+    
     //println!("{}", hash_body_value);
 
     match document_exists(&index, &hash_body_value.to_string()) {
@@ -46,6 +51,45 @@ pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64,
                     hash_body_field => hash_body_value.to_string()
                 ));
                 index_writer.commit()?;
+                return Ok(true);
+                //println!("Added.");
+            } else {
+                return Ok(false);
+            }
+        }
+        Err(e) => println!("Error occurred: {:?}", e)
+    }
+        
+    Ok(false)
+}
+
+pub fn insert_document_noc(index: &Index, index_writer: &IndexWriter, title: &str, body: &str, page_number: u64, chunk_number: u64) -> tantivy::Result<bool> {
+    let schema = index.schema();
+    
+    let title_field = schema.get_field("title").unwrap();
+    let body_field = schema.get_field("body").unwrap();
+    let page_number_field = schema.get_field("page_number").unwrap();
+    let chunk_number_field = schema.get_field("chunk_number").unwrap();
+    let hash_body_field = schema.get_field("hash_body").unwrap();
+
+    //let hash_body_value = blake3::hash(body.as_bytes());
+    let hash_body_value_bytes = body.as_bytes();
+    //let hash_body_value_bytes = &hash_body_value_bytes[0..=255]; // Might be faster like this?
+    let hash_body_value = blake3::hash(hash_body_value_bytes);
+    
+    //println!("{}", hash_body_value);
+
+    match document_exists(&index, &hash_body_value.to_string()) {
+        Ok(exists) => {
+            if ! exists {
+                //println!("Adding document.");
+                let _ = index_writer.add_document(doc!(
+                    title_field => title,
+                    body_field => body,
+                    page_number_field => page_number,
+                    chunk_number_field => chunk_number,
+                    hash_body_field => hash_body_value.to_string()
+                ));
                 return Ok(true);
                 //println!("Added.");
             } else {
@@ -73,7 +117,9 @@ pub fn insert_doc(index: &Index, mut tdoc: TantivyDocument) -> tantivy::Result<(
     if let Some(x) = tdoc.get_first(body_field) { // We only process the first one.
         // https://github.com/quickwit-oss/tantivy/pull/2071 for as_str() info.
         let hash_body_value = x.as_str().unwrap();
-        let hash_body_value = blake3::hash(hash_body_value.as_bytes());
+        let hash_body_value_bytes = hash_body_value.as_bytes();
+        let hash_body_value_bytes = &hash_body_value_bytes[0..=255]; // Might be faster like this?
+        let hash_body_value = blake3::hash(hash_body_value_bytes);
 
         match document_exists(&index, &hash_body_value.to_string()) {
             Ok(exists) => {
@@ -113,13 +159,15 @@ pub fn insert_file<P: AsRef<Path>>(index: &Index, path: P) -> tantivy::Result<u6
 
     let chunks = chunk_string(&contents, 2048); // Arbitrary value.
     let mut chunk_counter = 0u64;
+    let mut index_writer: IndexWriter = index.writer(50_000_000)?;
     for chunk in chunks {
-        let inserted = insert_document(&index, filename_str, &chunk, 0, chunk_counter).unwrap();
+        let inserted = insert_document_noc(&index, &index_writer, filename_str, &chunk, 0, chunk_counter).unwrap();
         //println!("Inserted chunk {}", chunk_counter);
         if inserted {
             chunk_counter += 1;
         }
     }
+    index_writer.commit()?;
     
     Ok(chunk_counter)
 }
