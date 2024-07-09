@@ -6,7 +6,7 @@ Simple RAG system written in Rust. It uses `fastembed-rs` to create
 embeddings for the vector database. The vector database is implemented
 using `oasysdb`. Texts are split into chunks using `text-splitter`. The
 Candle library is used to run the models (which can be downloaded from
-huggingface).
+huggingface). Alternatively, Ollama can be used to generate answers.
 
 The system runs locally, no data is uploaded or stored online.
 
@@ -242,6 +242,10 @@ Water also significantly impacts climate systems as a greenhouse gas through wat
 and influences weather patterns by distributing heat and shaping global air currents.
 (References: document "keywords" - section 3)
 ```
+
+### Ollama
+
+By specifying the `-o` parameter, Ollama (mistral) will be used to generate answers. This expects Ollama to be installed and the mistral model to have been downloaded.
 
 ## List database contents.
 
