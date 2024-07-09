@@ -19,6 +19,7 @@ search. This is still work in progress.
  - Depending on the model, might need a HF token!
  - Code needs cleaning/improving.
  - Tantivy DB integration needs work.
+ - The text splitter is slow.
 
 ## Ubuntu
 
