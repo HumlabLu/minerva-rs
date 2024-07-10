@@ -27,7 +27,7 @@ pub async fn genai_generate(sys_msg: &str, question: &str, model: &str) -> Resul
     println!("{}", chat_res.content.as_deref().unwrap_or("NO ANSWER"));
      */
     
-    let chat_res = client.exec_chat_stream(model, chat_req.clone(), None).await?;
+    let chat_res = client.exec_chat_stream(model, chat_req.clone(), None).await.expect("Ollama:");
     print_chat_stream(chat_res, Some(&print_options)).await?;
     
     println!();
