@@ -23,6 +23,9 @@ use genaigen::genai_generate;
 // chunks that come before and after the found chunk. (Or store
 // plus/minus chunks as well when creating chunks, there we have
 // all the info...
+//
+// Maybe move the instructions (precise, concise) to after the context
+// so it doesn't get lost if we have a really long context.
 // =====================================================================
 
 // =====================================================================
@@ -276,14 +279,17 @@ fn main() -> anyhow::Result<()> {
     if let Some(keyword) = &args.keyword {
         println!("Keyword {}", &keyword);
 
-        let x = search_documents(&keyword).unwrap();
+        let x = search_documents(&keyword, args.nearest).unwrap();
         for (_s, d, _snippet) in x {
             //println!("{:?}", snippet.fragment());
             //keyword_context += snippet.fragment()
-            //println!("{:?}", d.field_values()[1].value.as_str().unwrap());
+            //println!("{:?}", d.field_values()[1].value.as_text().unwrap());
             //keyword_context += d.field_values()[1].value.as_text().unwrap_or(""); //.as_str().unwrap();
             keyword_context += match &d.field_values()[1].value {
-                OwnedValue::Str(s) => s,
+                OwnedValue::Str(s) => {
+                    println!("{} ...", s.chars().take(74).collect::<String>());
+                    s
+                },
                 _ => {
                     println!("Warning: Expected text field, found different type");
                     ""
@@ -291,7 +297,6 @@ fn main() -> anyhow::Result<()> {
             };
         }
     }
-    println!("{}", keyword_context);
     
     // Search for the nearest neighbours.
     if let Some(query) = &args.query {
@@ -359,7 +364,7 @@ fn main() -> anyhow::Result<()> {
             //println!("{:?}", ts_end - ts_start);
             println!("\n{}", ans.unwrap().trim().to_string());
         } else {
-            // We create a system message and a qustion.
+            // We create a system message and a question.
             let sys_message = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context}", context=context_str, date=chrono::Local::now().format("%A, %B %e, %Y"));
             
             let q = format!("Question: {question}", question=query);

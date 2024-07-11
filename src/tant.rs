@@ -330,10 +330,15 @@ Longer string.", 1, 1)?;
     Ok(())
 }
 
-pub fn search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>> {
+pub fn search_documents(query_str: &str, limit: usize) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>> {
+    // with_limit() does not accept 0.
+    if limit == 0 {
+        return Ok(vec![]);
+    }
+
     let index_path = Path::new("db/tantivy");
     
-    let schema = &*SCHEMA;  // Ensure SCHEMA is defined and available in scope
+    let schema = &*SCHEMA;
     let directory = MmapDirectory::open(index_path)?;
     let index = Index::open_or_create(directory, schema.clone())?;
     
@@ -345,8 +350,8 @@ pub fn search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDoc
     
     let query_parser = QueryParser::for_index(&index, vec![title, body]);
     let query = query_parser.parse_query(query_str)?;
-    
-    let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
+
+    let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
 
     let snippet_generator = SnippetGenerator::create(&searcher, &*query, body)?;
     
