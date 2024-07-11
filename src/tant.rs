@@ -8,6 +8,7 @@ use tantivy::snippet::{Snippet, SnippetGenerator};
 use once_cell::sync::Lazy;
 use std::fs;
 use crate::embedder::{chunk_string};
+use crate::global::get_global_config;
 
 static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     let mut schema_builder = Schema::builder();
@@ -141,13 +142,14 @@ pub fn insert_doc(index: &Index, mut tdoc: TantivyDocument) -> tantivy::Result<(
 // We need to be able to define the DB path as well...
 // Or have it as an argument here!
 pub fn get_index_schema() -> tantivy::Result<(Index, Schema)> {
-    let path = Path::new("db/tantivy");
+    let config = get_global_config().unwrap();
+    let path = Path::new(&config.tantivy_dir);
     if !path.exists() {
         println!("Creating directory: {:?}", path);
         fs::create_dir_all(path).expect("Cannot create oasysdb directory.");
     }
     let schema = &*SCHEMA;
-    let directory = MmapDirectory::open(Path::new(path))?;
+    let directory = MmapDirectory::open(path)?;
     let index = Index::open_or_create(directory, schema.clone())?;
     Ok((index, schema.clone()))
 }
