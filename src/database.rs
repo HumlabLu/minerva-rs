@@ -2,6 +2,8 @@ use oasysdb::prelude::*;
 use fastembed::{Embedding};
 use std::collections::HashMap;
 use ulid::Ulid;
+use std::path::Path;
+use std::fs;
 
 /*
 In short, use Collection to store your vector records or search
@@ -38,7 +40,11 @@ pub fn data_to_record(emb: &Embedding, filename: &str, txt: &str, cnt: usize) ->
 }
 
 pub fn get_db() -> Database {
-    //let args = Args::parse(); // Should not be here, have function args instead.
+    let path = Path::new("db/oasys");
+    if !path.exists() {
+        println!("Creating directory: {:?}", path);
+        fs::create_dir_all(path).expect("Cannot create oasysdb directory.");
+    }
     let db = Database::open("db/oasys").unwrap();
     // let collection = db.get_collection("vectors").unwrap();
     println!("DB contains {} collections.", db.len());

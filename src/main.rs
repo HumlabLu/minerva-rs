@@ -15,6 +15,8 @@ use tant::{search_documents, insert_file, get_index_schema, get_num_documents};
 use tantivy::schema::OwnedValue;
 mod genaigen;
 use genaigen::genai_generate;
+mod global;
+use global::{GLOBAL_CONFIG, initialise_globals};
 
 // =====================================================================
 // Store multiple sizes, eg 256 nd 1024. Then search on the 256,
@@ -125,6 +127,13 @@ fn main() -> anyhow::Result<()> {
     if args.verbose {
         println!("{:?}", &args);
     }
+
+    initialise_globals("db/oasysdb", "db/tantivy");
+    let config = GLOBAL_CONFIG.lock().unwrap();
+    println!("Oasysdb directory: {:?}", config.oasysdb_dir);
+    println!("Tantivy directory: {:?}", config.tantivy_dir);
+
+    
     println!("Embedding dim {}", get_embedding_dim().unwrap());
 
     // test
@@ -147,7 +156,7 @@ fn main() -> anyhow::Result<()> {
     let mut db = get_db();
     let mut collection = db.get_collection(&args.collection).unwrap_or_else(|_| {
         println!("Creating a new empty collection.");
-        let  config = Config::default();
+        let config = Config::default();
         //config.distance = Distance::Cosine;
         //Collection::build(&config, &records).unwrap()
         let c = Collection::new(&config);

@@ -141,9 +141,13 @@ pub fn insert_doc(index: &Index, mut tdoc: TantivyDocument) -> tantivy::Result<(
 // We need to be able to define the DB path as well...
 // Or have it as an argument here!
 pub fn get_index_schema() -> tantivy::Result<(Index, Schema)> {
-    let index_path = Path::new("db/tantivy");
+    let path = Path::new("db/tantivy");
+    if !path.exists() {
+        println!("Creating directory: {:?}", path);
+        fs::create_dir_all(path).expect("Cannot create oasysdb directory.");
+    }
     let schema = &*SCHEMA;
-    let directory = MmapDirectory::open(Path::new(index_path))?;
+    let directory = MmapDirectory::open(Path::new(path))?;
     let index = Index::open_or_create(directory, schema.clone())?;
     Ok((index, schema.clone()))
 }
