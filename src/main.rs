@@ -16,7 +16,7 @@ use tantivy::schema::OwnedValue;
 mod genaigen;
 use genaigen::genai_generate;
 mod global;
-use global::{GLOBAL_CONFIG, initialise_globals};
+use global::{GlobalConfigBuilder, initialise_globals, get_global_config};
 
 // =====================================================================
 // Store multiple sizes, eg 256 nd 1024. Then search on the 256,
@@ -128,12 +128,26 @@ fn main() -> anyhow::Result<()> {
         println!("{:?}", &args);
     }
 
-    initialise_globals("db/oasysdb", "db/tantivy");
-    let config = GLOBAL_CONFIG.lock().unwrap();
-    println!("Oasysdb directory: {:?}", config.oasysdb_dir);
-    println!("Tantivy directory: {:?}", config.tantivy_dir);
+    let config = GlobalConfigBuilder::new()
+        .oasysdb_dir("db/oasysdb")
+        .tantivy_dir("db/tantivy")
+        .build()
+        .expect("Failed to build global config");
+    initialise_globals(config);
 
-    
+    let config = get_global_config().unwrap();
+    println!("OasysDB directory: {:?}", config.oasysdb_dir);
+    println!("Tantivy directory: {:?}", config.tantivy_dir);
+    /*
+    match get_global_config() {
+        Ok(config) => {
+            println!("OasysDB directory: {:?}", config.oasysdb_dir);
+            println!("Tantivy directory: {:?}", config.tantivy_dir);
+        },
+        Err(e) => println!("Error: {}", e),  
+    }
+    */
+
     println!("Embedding dim {}", get_embedding_dim().unwrap());
 
     // test

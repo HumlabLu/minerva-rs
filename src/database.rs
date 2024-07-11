@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use ulid::Ulid;
 use std::path::Path;
 use std::fs;
+use crate::global::get_global_config;
 
 /*
 In short, use Collection to store your vector records or search
@@ -40,12 +41,13 @@ pub fn data_to_record(emb: &Embedding, filename: &str, txt: &str, cnt: usize) ->
 }
 
 pub fn get_db() -> Database {
-    let path = Path::new("db/oasys");
+    let config = get_global_config().unwrap();
+    let path = Path::new(&config.oasysdb_dir);
     if !path.exists() {
         println!("Creating directory: {:?}", path);
         fs::create_dir_all(path).expect("Cannot create oasysdb directory.");
     }
-    let db = Database::open("db/oasys").unwrap();
+    let db = Database::open(path.to_str().unwrap()).unwrap(); // A bit dirty...
     // let collection = db.get_collection("vectors").unwrap();
     println!("DB contains {} collections.", db.len());
     db
