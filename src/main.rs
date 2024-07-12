@@ -375,9 +375,9 @@ fn main() -> anyhow::Result<()> {
 
         if args.ollama == false {
             let mut q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
-            if q.len() > 4096 { // Come to think of it, those might be tokens...
-                println!("Prompt longer than 4096, truncating.");
-                q = q[0..=4095].to_string();
+            if q.len() >  12288 { // Come to think of it, those might be tokens... was 4096
+                println!("Prompt longer than 12288, truncating.");
+                q = q[0..=12287].to_string();
             }
             
             //let q = format!("{question}", question=query);
@@ -396,7 +396,7 @@ fn main() -> anyhow::Result<()> {
                 println!("\n{}\n", sys_message);
             }
 
-            let _ = genai_generate(&sys_message, &q, &args.ollama_model);
+            let _ = genai_generate(&sys_message, &q, &args.ollama_model)?;
         }
     }
 
