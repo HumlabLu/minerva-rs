@@ -336,7 +336,7 @@ Longer string.", 1, 1)?;
     Ok(())
 }
 
-pub fn search_documents(query_str: &str, limit: usize) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>> {
+pub fn search_documents(query_str: &str, limit: usize) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>, String)>> {
     // with_limit() does not accept 0.
     if limit == 0 {
         return Ok(vec![]);
@@ -348,13 +348,14 @@ pub fn search_documents(query_str: &str, limit: usize) -> tantivy::Result<Vec<(f
     let directory = MmapDirectory::open(index_path)?;
     let index = Index::open_or_create(directory, schema.clone())?;
     
-    let title = schema.get_field("title").unwrap();
+    let title_field = schema.get_field("title").unwrap();
     let body = schema.get_field("body").unwrap();
+    let chunk_number_field = schema.get_field("chunk_number").unwrap();
     
     let reader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
     let searcher = reader.searcher();
     
-    let query_parser = QueryParser::for_index(&index, vec![title, body]);
+    let query_parser = QueryParser::for_index(&index, vec![title_field, body]);
     let query = query_parser.parse_query(query_str)?;
 
     let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
@@ -368,11 +369,50 @@ pub fn search_documents(query_str: &str, limit: usize) -> tantivy::Result<Vec<(f
         let snippet = snippet_generator.snippet_from_doc(&retrieved_doc);
         //println!("snippet: {:?}", snippet.to_html());
         //println!("custom highlighting: {}", highlight(&snippet));
-        documents.push((score, retrieved_doc, Some(snippet)));
+
+        // Create an info "metadata" string.
+        let chunk_number = retrieved_doc.get_first(chunk_number_field).unwrap();
+        let title = retrieved_doc.get_first(title_field).unwrap();
+        //println!("{:?}/{:?}", extract_string(title).unwrap(), extract_u64(chunk_number).unwrap());
+        let info = format!("{}/{}", extract_string(title).unwrap(), extract_u64(chunk_number).unwrap());
+        documents.push((score, retrieved_doc, Some(snippet), info));
     }
     
     Ok(documents)
 }
+
+fn extract_string(value: &OwnedValue) -> Option<String> {
+    match value {
+        OwnedValue::Str(s) => Some(s.clone()),
+        _ => None,
+    }
+}
+
+fn extract_u64(value: &OwnedValue) -> Option<u64> {
+    match value {
+        OwnedValue::U64(u) => Some(*u),
+        _ => None,
+    }
+}
+/*
+fn extract_value(value: &OwnedValue) -> Option<String> {
+    match value {
+        OwnedValue::Null => Some("null".to_string()),
+        OwnedValue::Str(s) => Some(s.clone()),
+        OwnedValue::PreTokStr(pts) => Some(pts.text().to_string()),
+        OwnedValue::U64(u) => Some(u.to_string()),
+        OwnedValue::I64(i) => Some(i.to_string()),
+        OwnedValue::F64(f) => Some(f.to_string()),
+        OwnedValue::Bool(b) => Some(b.to_string()),
+        OwnedValue::Date(d) => Some(d.to_string()),
+        OwnedValue::Facet(f) => Some(f.to_string()),
+        OwnedValue::Bytes(b) => Some(format!("{:?}", b)),
+        OwnedValue::IpAddr(ip) => Some(ip.to_string()),
+        OwnedValue::Array(_) => Some("[array]".to_string()),
+        OwnedValue::Object(_) => Some("{object}".to_string()),
+    }
+}
+ */
 
 #[allow(dead_code)]
 pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>> {
@@ -390,6 +430,7 @@ pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, Tant
     let mut documents = Vec::new();
     for (score, doc_address) in top_docs {
         let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
+        
         documents.push((score, retrieved_doc, None)); // No snippets in fuzzy search.
     }
 

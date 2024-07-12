@@ -303,14 +303,14 @@ fn main() -> anyhow::Result<()> {
         println!("Keyword: \"{}\"", &keyword);
 
         let x = search_documents(&keyword, args.nearest).unwrap();
-        for (s, d, _snippet) in x {
+        for (s, d, _snippet, i) in x {
             //println!("{:?}", snippet.fragment());
             //keyword_context += snippet.fragment()
             //println!("{:?}", d.field_values()[1].value.as_text().unwrap());
             //keyword_context += d.field_values()[1].value.as_text().unwrap_or(""); //.as_str().unwrap();
             keyword_context += match &d.field_values()[1].value {
                 OwnedValue::Str(txt) => {
-                    println!("{:.4} | {} ...", s, txt.chars().take(71).collect::<String>());
+                    println!("{:.4} | {} {} ...", s, i, txt.chars().take(71).collect::<String>());
                     txt
                 },
                 _ => {
