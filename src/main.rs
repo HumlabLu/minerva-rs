@@ -289,7 +289,7 @@ fn main() -> anyhow::Result<()> {
                     hm.get("text").unwrap()
                 ).unwrap());
             }
-            print_contents();
+            let _ = print_contents();
         },
         Some(Commands::Del { }) => {
             let _ = db.delete_collection(&args.collection);

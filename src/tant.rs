@@ -463,7 +463,7 @@ pub fn print_contents() -> Result<(), Box<dyn std::error::Error>> {
     let body = schema.get_field("body").unwrap();
     let page_number = schema.get_field("page_number").unwrap();
     let chunk_number = schema.get_field("chunk_number").unwrap();
-    let hash_body = schema.get_field("hash_body").unwrap();
+    let _hash_body = schema.get_field("hash_body").unwrap();
 
     // Create a searcher
     let reader = index.reader()?;
