@@ -9,6 +9,7 @@ use once_cell::sync::Lazy;
 use std::fs;
 use crate::embedder::{chunk_string};
 use crate::global::get_global_config;
+use terminal_size::{Width, terminal_size};
 
 static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     let mut schema_builder = Schema::builder();
@@ -475,6 +476,9 @@ pub fn print_contents() -> Result<(), Box<dyn std::error::Error>> {
     // Collect all documents (adjust the number if you have a large database)
     let top_docs = searcher.search(&query, &TopDocs::with_limit(1000000))?;
 
+    let width = terminal_size().map(|(Width(w), _)| w).unwrap_or(80);
+    let body_length = width.saturating_sub(8); // Subtract some space for padding.
+
     // Print each document
     for (_score, doc_address) in top_docs {
         let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
@@ -482,17 +486,21 @@ pub fn print_contents() -> Result<(), Box<dyn std::error::Error>> {
         let body_text = retrieved_doc.get_first(body)
             .and_then(extract_string)
             .unwrap_or_else(|| String::from(""));
-        let truncated_body = body_text.chars().take(80).collect::<String>();
+        let body_text = body_text.replace('\n', " ");
+        let truncated_body = body_text.chars().take(body_length.into()).collect::<String>();
         
-        println!("{:?}", retrieved_doc.get_first(title)
+        println!("{} {}/{}", retrieved_doc.get_first(title)
             .and_then(extract_string)
-            .unwrap_or_else(|| String::from(""))
+            .unwrap_or_else(|| String::from("")),
+            extract_u64(
+                retrieved_doc.get_first(page_number).unwrap()
+            ).unwrap(),
+            extract_u64(
+                retrieved_doc.get_first(chunk_number).unwrap()
+            ).unwrap()
         );
-        println!("Body: {:?}", truncated_body);
-        println!("Page Number: {:?}", retrieved_doc.get_first(page_number).unwrap());
-        println!("Chunk Number: {:?}", retrieved_doc.get_first(chunk_number).unwrap());
-        println!("Hash Body: {:?}", retrieved_doc.get_first(hash_body).unwrap());
-        println!();
+        println!("    {}", truncated_body);
+        //println!("Hash Body: {:?}", retrieved_doc.get_first(hash_body).unwrap());
     }
 
     Ok(())
