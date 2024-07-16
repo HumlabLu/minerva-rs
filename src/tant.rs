@@ -453,3 +453,47 @@ fn highlight(snippet: &Snippet) -> String {
     result.push_str(&snippet.fragment()[start_from..]);
     result
 }
+
+pub fn print_contents() -> Result<(), Box<dyn std::error::Error>> {
+    let (index, schema) = get_index_schema().unwrap();
+    
+    // Get field accessors
+    let title = schema.get_field("title").unwrap();
+    let body = schema.get_field("body").unwrap();
+    let page_number = schema.get_field("page_number").unwrap();
+    let chunk_number = schema.get_field("chunk_number").unwrap();
+    let hash_body = schema.get_field("hash_body").unwrap();
+
+    // Create a searcher
+    let reader = index.reader()?;
+    let searcher = reader.searcher();
+
+    // Search for all documents
+    let query_parser = tantivy::query::QueryParser::for_index(&index, vec![title, body]);
+    let query = query_parser.parse_query("*")?;
+
+    // Collect all documents (adjust the number if you have a large database)
+    let top_docs = searcher.search(&query, &TopDocs::with_limit(1000000))?;
+
+    // Print each document
+    for (_score, doc_address) in top_docs {
+        let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
+
+        let body_text = retrieved_doc.get_first(body)
+            .and_then(extract_string)
+            .unwrap_or_else(|| String::from(""));
+        let truncated_body = body_text.chars().take(80).collect::<String>();
+        
+        println!("{:?}", retrieved_doc.get_first(title)
+            .and_then(extract_string)
+            .unwrap_or_else(|| String::from(""))
+        );
+        println!("Body: {:?}", truncated_body);
+        println!("Page Number: {:?}", retrieved_doc.get_first(page_number).unwrap());
+        println!("Chunk Number: {:?}", retrieved_doc.get_first(chunk_number).unwrap());
+        println!("Hash Body: {:?}", retrieved_doc.get_first(hash_body).unwrap());
+        println!();
+    }
+
+    Ok(())
+}

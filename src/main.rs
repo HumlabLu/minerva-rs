@@ -11,7 +11,7 @@ mod qmistral;
 use qmistral::run_qmistral;
 use std::collections::HashMap;
 mod tant;
-use tant::{search_documents, insert_file, get_index_schema, get_num_documents};
+use tant::{search_documents, insert_file, get_index_schema, get_num_documents, print_contents};
 use tantivy::schema::OwnedValue;
 mod genaigen;
 use genaigen::genai_generate;
@@ -19,7 +19,7 @@ mod global;
 use global::{GlobalConfigBuilder, initialise_globals, get_global_config};
 
 // =====================================================================
-// Store multiple sizes, eg 256 nd 1024. Then search on the 256,
+// Store multiple sizes, eg 256 and 1024. Then search on the 256,
 // but return the longer 1024, so we get "more context", but also
 // more specific searching. (A poor man's version of returning the
 // chunks that come before and after the found chunk. (Or store
@@ -289,6 +289,7 @@ fn main() -> anyhow::Result<()> {
                     hm.get("text").unwrap()
                 ).unwrap());
             }
+            print_contents();
         },
         Some(Commands::Del { }) => {
             let _ = db.delete_collection(&args.collection);
