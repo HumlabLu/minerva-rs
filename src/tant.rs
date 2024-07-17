@@ -10,6 +10,95 @@ use std::fs;
 use crate::embedder::{chunk_string};
 use crate::global::get_global_config;
 use terminal_size::{Width, terminal_size};
+use std::fmt;
+
+// One "unit" of information from the DB.
+pub struct MinervaDoc {
+    pub title: String,
+    pub body: String,
+    pub page_num: u64,
+    pub chunk_num: u64,
+    pub hash_body: String,
+}
+
+impl TryFrom<TantivyDocument> for MinervaDoc {
+    type Error = Box<dyn std::error::Error>;
+
+    fn try_from(doc: TantivyDocument) -> Result<Self, Self::Error> {
+        let (_index, schema) = get_index_schema()?;
+        Ok(MinervaDoc {
+            title: doc.get_first(schema.get_field("title")?)
+                .and_then(|v| v.as_str())
+                .ok_or("Missing title")?
+                .to_string(),
+            body: doc.get_first(schema.get_field("body")?)
+                .and_then(|v| v.as_str())
+                .ok_or("Missing body")?
+                .to_string(),
+            page_num: doc.get_first(schema.get_field("page_number")?)
+                .and_then(|v| v.as_u64())
+                .ok_or("Missing page_number")?,
+            chunk_num: doc.get_first(schema.get_field("chunk_number")?)
+                .and_then(|v| v.as_u64())
+                .ok_or("Missing chunk_number")?,
+            hash_body: doc.get_first(schema.get_field("hash_body")?)
+                .and_then(|v| v.as_str()).ok_or("Missing hash_body")?
+                .to_string(),
+        })
+    }
+}
+
+impl TryFrom<&TantivyDocument> for MinervaDoc {
+    type Error = Box<dyn std::error::Error>;
+    
+    fn try_from(doc: &TantivyDocument) -> Result<Self, Self::Error> {
+        let (_index, schema) = get_index_schema()?;
+        Ok(MinervaDoc {
+            title: doc.get_first(schema.get_field("title")?)
+                .and_then(|v| v.as_str())
+                .ok_or("Missing title")?
+                .to_string(),
+            body: doc.get_first(schema.get_field("body")?)
+                .and_then(|v| v.as_str())
+                .ok_or("Missing body")?
+                .to_string(),
+            page_num: doc.get_first(schema.get_field("page_number")?)
+                .and_then(|v| v.as_u64())
+                .ok_or("Missing page_number")?,
+            chunk_num: doc.get_first(schema.get_field("chunk_number")?)
+                .and_then(|v| v.as_u64())
+                .ok_or("Missing chunk_number")?,
+            hash_body: doc.get_first(schema.get_field("hash_body")?)
+                .and_then(|v| v.as_str()).ok_or("Missing hash_body")?
+                .to_string(),
+        })
+    }
+}
+
+impl TryFrom<&MinervaDoc> for TantivyDocument {
+    type Error = Box<dyn std::error::Error>;
+
+    fn try_from(minerva_doc: &MinervaDoc) -> Result<Self, Self::Error> {
+        let (_index, schema) = get_index_schema().unwrap();
+
+        let mut doc = TantivyDocument::default();
+        doc.add_text(schema.get_field("title")?, &minerva_doc.title);
+        doc.add_text(schema.get_field("body")?, &minerva_doc.body);
+        doc.add_u64(schema.get_field("page_number")?, minerva_doc.page_num);
+        doc.add_u64(schema.get_field("chunk_number")?, minerva_doc.chunk_num);
+        doc.add_text(schema.get_field("hash_body")?, &minerva_doc.hash_body);
+
+        Ok(doc)
+    }
+}
+
+// This one just dumps all the fields, without truncating.
+impl fmt::Display for MinervaDoc {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "{} {}/{}", self.title, self.page_num, self.chunk_num)?;
+        write!(f, "    {}", &self.body)
+    }
+}
 
 static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     let mut schema_builder = Schema::builder();
@@ -382,6 +471,8 @@ pub fn search_documents(query_str: &str, limit: usize) -> tantivy::Result<Vec<(f
     Ok(documents)
 }
 
+// There is as_str() and as_u64() as well...
+// https://docs.rs/tantivy/latest/tantivy/schema/document/trait.Value.html#method.as_str
 fn extract_string(value: &OwnedValue) -> Option<String> {
     match value {
         OwnedValue::Str(s) => Some(s.clone()),
@@ -395,25 +486,6 @@ fn extract_u64(value: &OwnedValue) -> Option<u64> {
         _ => None,
     }
 }
-/*
-fn extract_value(value: &OwnedValue) -> Option<String> {
-    match value {
-        OwnedValue::Null => Some("null".to_string()),
-        OwnedValue::Str(s) => Some(s.clone()),
-        OwnedValue::PreTokStr(pts) => Some(pts.text().to_string()),
-        OwnedValue::U64(u) => Some(u.to_string()),
-        OwnedValue::I64(i) => Some(i.to_string()),
-        OwnedValue::F64(f) => Some(f.to_string()),
-        OwnedValue::Bool(b) => Some(b.to_string()),
-        OwnedValue::Date(d) => Some(d.to_string()),
-        OwnedValue::Facet(f) => Some(f.to_string()),
-        OwnedValue::Bytes(b) => Some(format!("{:?}", b)),
-        OwnedValue::IpAddr(ip) => Some(ip.to_string()),
-        OwnedValue::Array(_) => Some("[array]".to_string()),
-        OwnedValue::Object(_) => Some("{object}".to_string()),
-    }
-}
- */
 
 #[allow(dead_code)]
 pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>> {
@@ -455,6 +527,18 @@ fn highlight(snippet: &Snippet) -> String {
     result
 }
 
+// TODO: Make a struct with the schema values.
+/*
+#[derive(Debug, Clone)]
+pub struct MinervaDoc {
+    pub title: String,
+    pub body: String,
+    pub page_num: u64,
+    pub chunk_num: u64,
+    pub hash_body: String
+    }
+    Plus an into() or from() function for TantivyDoc to MinervaDoc?
+*/
 pub fn print_contents() -> Result<(), Box<dyn std::error::Error>> {
     let (index, schema) = get_index_schema().unwrap();
     
@@ -483,6 +567,10 @@ pub fn print_contents() -> Result<(), Box<dyn std::error::Error>> {
     for (_score, doc_address) in top_docs {
         let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
 
+        let minerva_doc: MinervaDoc = (&retrieved_doc).try_into()?;
+        println!("{}", &minerva_doc);
+
+        /*
         let body_text = retrieved_doc.get_first(body)
             .and_then(extract_string)
             .unwrap_or_else(|| String::from(""));
@@ -495,11 +583,11 @@ pub fn print_contents() -> Result<(), Box<dyn std::error::Error>> {
             extract_u64(
                 retrieved_doc.get_first(page_number).unwrap()
             ).unwrap(),
-            extract_u64(
-                retrieved_doc.get_first(chunk_number).unwrap()
-            ).unwrap()
+            //alt: retrieved_doc.get_first(page_number).expect("No page num").as_u64().unwrap(),
+            retrieved_doc.get_first(chunk_number).expect("No chunk number!").as_u64().unwrap(),
         );
         println!("    {}", truncated_body);
+        */
         //println!("Hash Body: {:?}", retrieved_doc.get_first(hash_body).unwrap());
     }
 
