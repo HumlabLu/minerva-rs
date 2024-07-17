@@ -17,6 +17,7 @@ mod genaigen;
 use genaigen::genai_generate;
 mod global;
 use global::{GlobalConfigBuilder, initialise_globals, get_global_config};
+mod minervadoc;
 
 // =====================================================================
 // Store multiple sizes, eg 256 and 1024. Then search on the 256,
