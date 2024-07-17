@@ -286,9 +286,10 @@ fn main() -> anyhow::Result<()> {
                     md_to_str(hm.get("filename").unwrap()).unwrap(),
                     md_to_str(hm.get("ccnt").unwrap()).unwrap()
                 );
-                println!("{:?}\n", md_to_str(
-                    hm.get("text").unwrap()
-                ).unwrap());
+                println!("{:?}\n", md_to_str(hm.get("text").unwrap()).unwrap()
+                    .replace('\n', " ")
+                    .replace('\r', "")
+                );
             }
             let _ = print_contents();
         },
@@ -312,7 +313,14 @@ fn main() -> anyhow::Result<()> {
             //keyword_context += d.field_values()[1].value.as_text().unwrap_or(""); //.as_str().unwrap();
             let minerva_doc: MinervaDoc = (&d).try_into().expect("Cannot convert TantivyDoc to MinervaDoc!");
             keyword_context += &minerva_doc.body;
-            println!("{:.4} | {} {} ...", s, i, &minerva_doc.body.chars().take(71).collect::<String>());
+            println!("{:.4} | {} {} ...", s, i,
+                &minerva_doc.body
+                .replace('\n', " ")
+                .replace('\r', "")
+                .chars()
+                .take(71)
+                .collect::<String>()
+            );
         }
     }
     
