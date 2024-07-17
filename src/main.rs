@@ -12,12 +12,12 @@ use qmistral::run_qmistral;
 use std::collections::HashMap;
 mod tant;
 use tant::{search_documents, insert_file, get_index_schema, get_num_documents, print_contents};
-use tantivy::schema::OwnedValue;
 mod genaigen;
 use genaigen::genai_generate;
 mod global;
 use global::{GlobalConfigBuilder, initialise_globals, get_global_config};
 mod minervadoc;
+use minervadoc::MinervaDoc;
 
 // =====================================================================
 // Store multiple sizes, eg 256 and 1024. Then search on the 256,
@@ -310,16 +310,9 @@ fn main() -> anyhow::Result<()> {
             //keyword_context += snippet.fragment()
             //println!("{:?}", d.field_values()[1].value.as_text().unwrap());
             //keyword_context += d.field_values()[1].value.as_text().unwrap_or(""); //.as_str().unwrap();
-            keyword_context += match &d.field_values()[1].value {
-                OwnedValue::Str(txt) => {
-                    println!("{:.4} | {} {} ...", s, i, txt.chars().take(71).collect::<String>());
-                    txt
-                },
-                _ => {
-                    println!("Warning: Expected text field, found different type");
-                    ""
-                }
-            };
+            let minerva_doc: MinervaDoc = (&d).try_into().expect("Cannot convert TantivyDoc to MinervaDoc!");
+            keyword_context += &minerva_doc.body;
+            println!("{:.4} | {} {} ...", s, i, &minerva_doc.body.chars().take(71).collect::<String>());
         }
     }
     

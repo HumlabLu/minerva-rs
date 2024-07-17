@@ -1,8 +1,7 @@
 use tantivy::TantivyDocument;
 use tantivy::schema::Value;
-use crate::get_index_schema;
+use crate::tant::get_index_schema;
 use std::fmt;
-
 
 // One "unit" of information from the DB.
 // Should be used by the oasysdb as well, with applicable try_from

@@ -457,8 +457,8 @@ pub fn print_contents() -> Result<(), Box<dyn std::error::Error>> {
     // Get field accessors
     let title = schema.get_field("title").unwrap();
     let body = schema.get_field("body").unwrap();
-    let page_number = schema.get_field("page_number").unwrap();
-    let chunk_number = schema.get_field("chunk_number").unwrap();
+    let _page_number = schema.get_field("page_number").unwrap();
+    let _chunk_number = schema.get_field("chunk_number").unwrap();
     let _hash_body = schema.get_field("hash_body").unwrap();
 
     // Create a searcher
@@ -473,15 +473,15 @@ pub fn print_contents() -> Result<(), Box<dyn std::error::Error>> {
     let top_docs = searcher.search(&query, &TopDocs::with_limit(1000000))?;
 
     let width = terminal_size().map(|(Width(w), _)| w).unwrap_or(80);
-    let body_length = width.saturating_sub(8); // Subtract some space for padding.
+    let _body_length = width.saturating_sub(8); // Subtract some space for padding.
 
     // Print each document
     for (_score, doc_address) in top_docs {
         let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
 
-        let minerva_doc: MinervaDoc = (&retrieved_doc).try_into()?;
+        let minerva_doc: MinervaDoc = (&retrieved_doc).try_into().expect("Cannot convert TantivyDoc to MinervaDoc!");
         println!("{}", &minerva_doc);
-
+        
         /*
         let body_text = retrieved_doc.get_first(body)
             .and_then(extract_string)
