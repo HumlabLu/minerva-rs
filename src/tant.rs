@@ -254,42 +254,7 @@ Longer string.", 1, 1)?;
              yesterday, and my first task is to assure my dear sister of my welfare and \
              increasing confidence in the success of my undertaking.",
         42, 128).unwrap();
-    
-    /*
-    let mut index_writer: IndexWriter = index.writer(50_000_000)?; // 50 MB buffer for indexing.
-    index_writer.add_document(doc!(
-        title => "Of Mice and Men",
-        body => "A few miles south of Soledad, the Salinas River drops in close to the hillside \
-            bank and runs deep and green. The water is warm too, for it has slipped twinkling \
-            over the yellow sands in the sunlight before reaching the narrow pool. On one \
-            side of the river the golden foothill slopes curve up to the strong and rocky \
-            Gabilan Mountains, but on the valley side the water is lined with trees—willows \
-            fresh and green with every spring, carrying in their lower leaf junctures the \
-            debris of the winter’s flooding; and sycamores with mottled, white, recumbent \
-            limbs and branches that arch over the pool",
-        page_number => 42u64
-    ))?;
-    */
-    /*
-    index_writer.add_document(doc!(
-        title => "Frankenstein",
-        title => "The Modern Prometheus",
-        body => "You will rejoice to hear that no disaster has accompanied the commencement of an \
-             enterprise which you have regarded with such evil forebodings.  I arrived here \
-             yesterday, and my first task is to assure my dear sister of my welfare and \
-             increasing confidence in the success of my undertaking.",
-        body => "Another body?",
-        page_number => 42u64,
-        chunk_number => 128u64
-    ))?;*/
-    
-    //index_writer.commit()?; // Finish processing the queue.
-
-    /*
-    drop(index_writer);
-    insert_doc(&index, old_man_doc).unwrap();
-    */
-    
+        
     let _reader = index
         .reader_builder()
         .reload_policy(ReloadPolicy::OnCommitWithDelay)
@@ -403,23 +368,29 @@ fn extract_u64(value: &OwnedValue) -> Option<u64> {
 }
 
 #[allow(dead_code)]
-pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>> {
+pub fn fuzzy_search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>, String)>> {
     let (index, schema) = get_index_schema().unwrap();
     
     let reader = index.reader()?;
     let searcher = reader.searcher();
     let body_field = schema.get_field("body").unwrap();
-    
+    let title_field = schema.get_field("title").unwrap();
+    let chunk_number_field = schema.get_field("chunk_number").unwrap();
+
     let term = Term::from_field_text(body_field, query_str);
-    let query = FuzzyTermQuery::new(term, 2, true);
+    let query = FuzzyTermQuery::new(term, 1, true); // 1 is edit distance.
 
     let (top_docs, count) = searcher.search(&query, &(TopDocs::with_limit(3), Count)).unwrap();
     println!("Count {}", count);
     let mut documents = Vec::new();
     for (score, doc_address) in top_docs {
         let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
+
+        let chunk_number = retrieved_doc.get_first(chunk_number_field).unwrap();
+        let title = retrieved_doc.get_first(title_field).unwrap();
+        let info = format!("{}/{}", extract_string(title).unwrap(), extract_u64(chunk_number).unwrap());
         
-        documents.push((score, retrieved_doc, None)); // No snippets in fuzzy search.
+        documents.push((score, retrieved_doc, None, info)); // No snippets in fuzzy search.
     }
 
     Ok(documents)

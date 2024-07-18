@@ -307,6 +307,7 @@ fn main() -> anyhow::Result<()> {
         println!("Keyword: \"{}\"", &keyword);
 
         let x = search_documents(&keyword, args.nearest).unwrap();
+        //let x = fuzzy_search_documents(&keyword).unwrap();
         for (s, d, _snippet, i) in x {
             //println!("{:?}", snippet.fragment());
             //keyword_context += snippet.fragment()
