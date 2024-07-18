@@ -6,11 +6,13 @@ use lazy_static::lazy_static;
 pub struct GlobalConfig {
     pub oasysdb_dir: PathBuf,
     pub tantivy_dir: PathBuf,
+    pub tantivy_chunk_size: usize,
 }
 
 pub struct GlobalConfigBuilder {
     oasysdb_dir: Option<PathBuf>,
     tantivy_dir: Option<PathBuf>,
+    tantivy_chunk_size: Option<usize>,
 }
 
 impl GlobalConfigBuilder {
@@ -18,6 +20,7 @@ impl GlobalConfigBuilder {
         GlobalConfigBuilder {
             oasysdb_dir: None,
             tantivy_dir: None,
+            tantivy_chunk_size: None,
         }
     }
 
@@ -31,10 +34,16 @@ impl GlobalConfigBuilder {
         self
     }
 
+    pub fn tantivy_chunk_size(mut self, size: usize) -> Self {
+        self.tantivy_chunk_size = Some(size.into());
+        self
+    }
+
     pub fn build(self) -> Result<GlobalConfig, String> {
         Ok(GlobalConfig {
             oasysdb_dir: self.oasysdb_dir.unwrap_or_else(|| PathBuf::from("./oasysdb")),
             tantivy_dir: self.tantivy_dir.unwrap_or_else(|| PathBuf::from("./tantivy")),
+            tantivy_chunk_size: self.tantivy_chunk_size.unwrap_or_else(|| 2048usize),
         })
     }
 }
@@ -44,6 +53,7 @@ impl Default for GlobalConfig {
         GlobalConfig {
             oasysdb_dir: PathBuf::from("./db/oasysdb"),
             tantivy_dir: PathBuf::from("./db/tantivy"),
+            tantivy_chunk_size: 2048usize,
         }
     }
 }

@@ -132,6 +132,7 @@ fn main() -> anyhow::Result<()> {
     let config = GlobalConfigBuilder::new()
         .oasysdb_dir("db/oasysdb")
         .tantivy_dir("db/tantivy")
+        .tantivy_chunk_size(2048)
         .build()
         .expect("Failed to build global config");
     initialise_globals(config);
