@@ -29,6 +29,9 @@ use minervadoc::MinervaDoc;
 //
 // Maybe move the instructions (precise, concise) to after the context
 // so it doesn't get lost if we have a really long context.
+//
+// Use ulids to delete from databases? They are time-increasing so
+// that we could delete the last ten added or something...
 // =====================================================================
 
 // =====================================================================
@@ -308,7 +311,7 @@ fn main() -> anyhow::Result<()> {
             println!("Deleted tantivy database.");
         },
         Some(Commands::Rag { query: _ }) => {
-            println!("Not implemented!"); // Instead of "-q"?
+            eprintln!("Not implemented!"); // Instead of "-q"?
         },
         None => {}
     }
@@ -353,6 +356,12 @@ fn main() -> anyhow::Result<()> {
         //let result = collection.true_search(&embedded_query, args.nearest).unwrap();
 
         for res in &result {
+
+            match MinervaDoc::try_from(res) {
+                Ok(minerva_doc) => println!("--> {:?}", minerva_doc),
+                Err(e) => println!("Conversion failed: {:?}", e),
+            }
+            
             let hm = md_to_hashmap(&res.data).unwrap();
             let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
             let chunk_nr = md_to_str(hm.get("ccnt").unwrap()).unwrap();
