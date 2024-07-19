@@ -358,7 +358,7 @@ fn main() -> anyhow::Result<()> {
         for res in &result {
 
             match MinervaDoc::try_from(res) {
-                Ok(minerva_doc) => println!("--> {:?}", minerva_doc),
+                Ok(_minerva_doc) => {}, //println!("--> {:?}", minerva_doc),
                 Err(e) => println!("Conversion failed: {:?}", e),
             }
             
