@@ -317,10 +317,10 @@ fn main() -> anyhow::Result<()> {
     }
 
     // This searches in the tantivy database.
+    /*
     if let Some(keyword) = &args.keyword {
         println!("Keyword: \"{}\"", &keyword);
 
-        /*
         let x = search_documents(&keyword, args.nearest).unwrap(); // Uses query builder!
         //let x = fuzzy_search_documents(&keyword).unwrap();
         //let x = phrase_search_documents(&keyword, args.nearest).unwrap();
@@ -339,8 +339,8 @@ fn main() -> anyhow::Result<()> {
                 .collect::<String>()
             );
         }
-        */
     }
+    */
     
     // Search for the nearest neighbours.
     if let Some(query) = &args.query {
@@ -374,11 +374,12 @@ fn main() -> anyhow::Result<()> {
 
         // Search in the tantivy database.
         if let Some(keyword) = &args.keyword {
+            println!("Searching for: \"{}\"", &keyword);
             let x = search_documents(&keyword, args.nearest).unwrap(); // Uses query builder!
             for (s, d, _snippet, _i) in x {
                 let mut minerva_doc: MinervaDoc = (&d).try_into().expect("Cannot convert TantivyDoc to MinervaDoc!");
                 minerva_doc.score = s;
-                if minerva_doc.score < 10.0 { // Arbitrary, need a parameter!
+                if minerva_doc.score < 5.0 { // Arbitrary, need a parameter!
                     println!("TANTIVY {:.4} | {}/{} | Filtered!",
                         &minerva_doc.score,
                         &minerva_doc.title,
@@ -392,12 +393,12 @@ fn main() -> anyhow::Result<()> {
 
         // Print summary
         if minerva_docs.len() > 0 {
-            println!("Relevant documents.");
+            println!("\nRelevant documents.");
             for minerva_doc in &minerva_docs {
                 let filename = &minerva_doc.title;
                 let chunk_nr = &minerva_doc.chunk_num;
                 let score = &minerva_doc.score;
-                println!("-> {score:.4} | {filename}/{chunk_nr}");
+                println!("{score:.4} | {filename}/{chunk_nr}");
             }
         }
 
