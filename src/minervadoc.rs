@@ -41,7 +41,9 @@ impl TryFrom<TantivyDocument> for MinervaDoc {
             hash_body: doc.get_first(schema.get_field("hash_body")?)
                 .and_then(|v| v.as_str()).ok_or("Missing hash_body")?
                 .to_string(),
-            ulid: "?".to_string(),
+            ulid: doc.get_first(schema.get_field("ulid")?)
+                .and_then(|v| v.as_str()).ok_or("Missing ulid")?
+                .to_string(),
             score: 0.0,
         })
     }
@@ -70,7 +72,9 @@ impl TryFrom<&TantivyDocument> for MinervaDoc {
             hash_body: doc.get_first(schema.get_field("hash_body")?)
                 .and_then(|v| v.as_str()).ok_or("Missing hash_body")?
                 .to_string(),
-            ulid: "?".to_string(),
+            ulid: doc.get_first(schema.get_field("ulid")?)
+                .and_then(|v| v.as_str()).ok_or("Missing ulid")?
+                .to_string(),
             score: 0.0,
         })
     }
@@ -88,6 +92,7 @@ impl TryFrom<&MinervaDoc> for TantivyDocument {
         doc.add_u64(schema.get_field("page_number")?, minerva_doc.page_num);
         doc.add_u64(schema.get_field("chunk_number")?, minerva_doc.chunk_num);
         doc.add_text(schema.get_field("hash_body")?, &minerva_doc.hash_body);
+        doc.add_text(schema.get_field("ulid")?, &minerva_doc.ulid);
 
         Ok(doc)
     }

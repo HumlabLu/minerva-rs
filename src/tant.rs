@@ -11,6 +11,7 @@ use crate::embedder::{chunk_string};
 use crate::global::get_global_config;
 use terminal_size::{Width, terminal_size};
 use crate::minervadoc::*;
+use ulid::Ulid;
 
 static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     let mut schema_builder = Schema::builder();
@@ -19,6 +20,7 @@ static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     schema_builder.add_u64_field("page_number", STORED);
     schema_builder.add_u64_field("chunk_number", STORED);
     schema_builder.add_text_field("hash_body", STRING | STORED);
+    schema_builder.add_text_field("ulid", STRING | STORED);
     schema_builder.build()
 });
 
@@ -34,7 +36,8 @@ pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64,
     let page_number_field = schema.get_field("page_number").unwrap();
     let chunk_number_field = schema.get_field("chunk_number").unwrap();
     let hash_body_field = schema.get_field("hash_body").unwrap();
-
+    let ulid_field = schema.get_field("ulid").unwrap();
+    
     //let hash_body_value = blake3::hash(body.as_bytes());
     let hash_body_value_bytes = body.as_bytes();
     //let hash_body_value_bytes = &hash_body_value_bytes[0..=255]; // Might be faster like this?
@@ -46,12 +49,14 @@ pub fn insert_document(index: &Index, title: &str, body: &str, page_number: u64,
         Ok(exists) => {
             if ! exists {
                 //println!("Adding document.");
+                let ulid = Ulid::new().to_string();
                 let _ = index_writer.add_document(doc!(
                     title_field => title,
                     body_field => body,
                     page_number_field => page_number,
                     chunk_number_field => chunk_number,
-                    hash_body_field => hash_body_value.to_string()
+                    hash_body_field => hash_body_value.to_string(),
+                    ulid_field => ulid
                 ));
                 index_writer.commit()?;
                 return Ok(true);
@@ -74,6 +79,7 @@ pub fn insert_document_noc(index: &Index, index_writer: &IndexWriter, title: &st
     let page_number_field = schema.get_field("page_number").unwrap();
     let chunk_number_field = schema.get_field("chunk_number").unwrap();
     let hash_body_field = schema.get_field("hash_body").unwrap();
+    let ulid_field = schema.get_field("ulid").unwrap();
 
     //let hash_body_value = blake3::hash(body.as_bytes());
     let hash_body_value_bytes = body.as_bytes();
@@ -86,12 +92,14 @@ pub fn insert_document_noc(index: &Index, index_writer: &IndexWriter, title: &st
         Ok(exists) => {
             if ! exists {
                 //println!("Adding document.");
+                let ulid = Ulid::new().to_string();
                 let _ = index_writer.add_document(doc!(
                     title_field => title,
                     body_field => body,
                     page_number_field => page_number,
                     chunk_number_field => chunk_number,
-                    hash_body_field => hash_body_value.to_string()
+                    hash_body_field => hash_body_value.to_string(),
+                    ulid_field => ulid
                 ));
                 return Ok(true);
                 //println!("Added.");
