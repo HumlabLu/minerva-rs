@@ -95,6 +95,11 @@ struct Args {
 #[derive(Debug, Subcommand, Clone)]
 pub enum Commands {
 
+    /// Generate an answer to a query.
+    Rag {
+        query: String,
+    },
+    
     /// List collection.
     List {
     },
@@ -302,6 +307,9 @@ fn main() -> anyhow::Result<()> {
             let _ = delete_all_documents();
             println!("Deleted tantivy database.");
         },
+        Some(Commands::Rag { query: _ }) => {
+            println!("Not implemented!"); // Instead of "-q"?
+        },
         None => {}
     }
 
@@ -310,7 +318,7 @@ fn main() -> anyhow::Result<()> {
     if let Some(keyword) = &args.keyword {
         println!("Keyword: \"{}\"", &keyword);
 
-        let x = search_documents(&keyword, args.nearest).unwrap();
+        let x = search_documents(&keyword, args.nearest).unwrap(); // Uses query builder!
         //let x = fuzzy_search_documents(&keyword).unwrap();
         //let x = phrase_search_documents(&keyword, args.nearest).unwrap();
         for (s, d, _snippet, i) in x {
