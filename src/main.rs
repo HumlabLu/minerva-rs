@@ -11,7 +11,7 @@ mod qmistral;
 use qmistral::run_qmistral;
 use std::collections::HashMap;
 mod tant;
-use tant::{search_documents, insert_file, get_index_schema, get_num_documents, print_contents};
+use tant::{search_documents, insert_file, get_index_schema, get_num_documents, print_contents, delete_all_documents};
 mod genaigen;
 use genaigen::genai_generate;
 mod global;
@@ -94,6 +94,7 @@ struct Args {
 
 #[derive(Debug, Subcommand, Clone)]
 pub enum Commands {
+
     /// List collection.
     List {
     },
@@ -297,6 +298,9 @@ fn main() -> anyhow::Result<()> {
         Some(Commands::Del { }) => {
             let _ = db.delete_collection(&args.collection);
             println!("Deleted collection \"{}\"", &args.collection);
+
+            let _ = delete_all_documents();
+            println!("Deleted tantivy database.");
         },
         None => {}
     }
@@ -308,6 +312,7 @@ fn main() -> anyhow::Result<()> {
 
         let x = search_documents(&keyword, args.nearest).unwrap();
         //let x = fuzzy_search_documents(&keyword).unwrap();
+        //let x = phrase_search_documents(&keyword, args.nearest).unwrap();
         for (s, d, _snippet, i) in x {
             //println!("{:?}", snippet.fragment());
             //keyword_context += snippet.fragment()
@@ -369,13 +374,14 @@ fn main() -> anyhow::Result<()> {
             let chunk_nr = md_to_str(hm.get("ccnt").unwrap()).unwrap();
             let text = md_to_str(hm.get("text").unwrap()).unwrap();
             
-            if args.showcontext == true {
-                println!("  {}\n", text);
-            }
             context_str += &(sep.to_owned() + "\n(document:\"" + &filename + "/" + &chunk_nr + "\", with contents:" + &text + ")");
             sep = ", ";
         }
 
+        if args.showcontext == true {
+            println!("  {}\n", &context_str);
+        }
+        
         let _ts_start = chrono::Local::now();
 
         if args.ollama == false {

@@ -1,5 +1,5 @@
 use tantivy::collector::{TopDocs, Count};
-use tantivy::query::{QueryParser, TermQuery, FuzzyTermQuery};
+use tantivy::query::{QueryParser, TermQuery, FuzzyTermQuery, PhraseQuery};
 use tantivy::schema::*;
 use tantivy::{doc, Index, IndexWriter, ReloadPolicy};
 use tantivy::directory::MmapDirectory;
@@ -306,6 +306,47 @@ Longer string.", 1, 1)?;
     Ok(())
 }
 
+#[allow(dead_code)]
+fn str_to_terms(text: &str, field: Field) -> Vec<Term> {
+    text.split_whitespace()
+        .map(|word| Term::from_field_text(field, word))
+        .collect()
+}
+
+#[allow(dead_code)]
+pub fn phrase_search_documents(query_str: &str, limit: usize) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>, String)>> {
+
+    let (index, schema) = get_index_schema().unwrap();
+    let reader = index.reader()?;
+    let searcher = reader.searcher();
+
+    let body_field = schema.get_field("body").unwrap();
+    let title_field = schema.get_field("title").unwrap();
+    let chunk_number_field = schema.get_field("chunk_number").unwrap();
+
+    let word_tuples = str_to_terms(query_str, body_field);
+    
+    let mut phrase_query = PhraseQuery::new(word_tuples);
+    phrase_query.set_slop(2);
+
+    // Search
+    let top_docs = searcher.search(&phrase_query, &TopDocs::with_limit(limit))?;
+
+    let mut documents = Vec::new();
+    for (score, doc_address) in top_docs {
+        let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
+
+        // Create an info "metadata" string.
+        let chunk_number = retrieved_doc.get_first(chunk_number_field).unwrap();
+        let title = retrieved_doc.get_first(title_field).unwrap();
+        //println!("{:?}/{:?}", extract_string(title).unwrap(), extract_u64(chunk_number).unwrap());
+        let info = format!("{}/{}", extract_string(title).unwrap(), extract_u64(chunk_number).unwrap());
+        documents.push((score, retrieved_doc, None, info));
+    }
+
+    Ok(documents)
+}
+
 pub fn search_documents(query_str: &str, limit: usize) -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>, String)>> {
     // with_limit() does not accept 0.
     if limit == 0 {
@@ -441,7 +482,7 @@ pub fn print_contents() -> Result<(), Box<dyn std::error::Error>> {
 
     // Search for all documents
     let query_parser = tantivy::query::QueryParser::for_index(&index, vec![title, body]);
-    let query = query_parser.parse_query("*")?;
+    let query = query_parser.parse_query("*")?; // Use the "all" query!
 
     // Collect all documents (adjust the number if you have a large database)
     let top_docs = searcher.search(&query, &TopDocs::with_limit(1000000))?;
@@ -470,6 +511,17 @@ pub fn print_contents() -> Result<(), Box<dyn std::error::Error>> {
 
         //println!("Hash Body: {:?}", retrieved_doc.get_first(hash_body).unwrap());
     }
+
+    Ok(())
+}
+
+pub fn delete_all_documents() -> Result<(), Box<dyn std::error::Error>> {
+    let (index, _schema) = get_index_schema().unwrap();
+    
+    let mut index_writer: IndexWriter = index.writer(50_000_000)?;
+
+    index_writer.delete_all_documents()?;
+    index_writer.commit()?;
 
     Ok(())
 }
