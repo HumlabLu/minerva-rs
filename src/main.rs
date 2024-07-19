@@ -18,6 +18,7 @@ mod global;
 use global::{GlobalConfigBuilder, initialise_globals, get_global_config};
 mod minervadoc;
 use minervadoc::MinervaDoc;
+use terminal_size::{Width, terminal_size};
 
 // =====================================================================
 // Store multiple sizes, eg 256 and 1024. Then search on the 256,
@@ -394,11 +395,21 @@ fn main() -> anyhow::Result<()> {
         // Print summary
         if minerva_docs.len() > 0 {
             println!("\nRelevant documents.");
+            let width = terminal_size().map(|(Width(w), _)| w).unwrap_or(80);
+            let width = width.saturating_sub(35); // Subtract for other fields.
             for minerva_doc in &minerva_docs {
                 let filename = &minerva_doc.title;
                 let chunk_nr = &minerva_doc.chunk_num;
                 let score = &minerva_doc.score;
-                println!("{score:.4} | {filename}/{chunk_nr}");
+                print!("{score:.4} | {filename}/{chunk_nr} | ");
+                println!("{} >",
+                    &minerva_doc.body
+                    .replace('\n', " ")
+                    .replace('\r', "")
+                    .chars()
+                    .take(width.into()) // into() because u16 to usize.
+                    .collect::<String>()
+                );
             }
         }
 
@@ -414,7 +425,7 @@ fn main() -> anyhow::Result<()> {
                 let filename = &minerva_doc.title;
                 let chunk_nr = &minerva_doc.chunk_num;
                 let text = &minerva_doc.body;
-                
+
                 context_str += &(sep.to_owned()
                     + "\n(document:\"" + &filename + "/" + &chunk_nr.to_string()
                     + "\", with contents:" + &text + ")");
