@@ -330,7 +330,10 @@ fn main() -> anyhow::Result<()> {
             //println!("{:?}", d.field_values()[1].value.as_text().unwrap());
             //keyword_context += d.field_values()[1].value.as_text().unwrap_or(""); //.as_str().unwrap();
             let minerva_doc: MinervaDoc = (&d).try_into().expect("Cannot convert TantivyDoc to MinervaDoc!");
-            keyword_context += &minerva_doc.body;
+            keyword_context += &("(document:".to_owned()
+                + "\"" + &minerva_doc.title + "\", with contents:"
+                + &minerva_doc.body+")");
+            //keyword_context += &minerva_doc.body;
             println!("{:.4} | {} {} ...", s, i,
                 &minerva_doc.body
                 .replace('\n', " ")
@@ -356,16 +359,11 @@ fn main() -> anyhow::Result<()> {
         //let result = collection.true_search(&embedded_query, args.nearest).unwrap();
 
         for res in &result {
-
-            match MinervaDoc::try_from(res) {
-                Ok(_minerva_doc) => {}, //println!("--> {:?}", minerva_doc),
-                Err(e) => println!("Conversion failed: {:?}", e),
-            }
-            
-            let hm = md_to_hashmap(&res.data).unwrap();
-            let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
-            let chunk_nr = md_to_str(hm.get("ccnt").unwrap()).unwrap();
+            let minerva_doc = MinervaDoc::try_from(res).expect("Cannot convert SearchResult to MinervaDoc.");
+            let filename = minerva_doc.title;
+            let chunk_nr = minerva_doc.chunk_num;
             let dist = res.distance;
+            
             print!("{dist:.4} | {filename}/{chunk_nr}");
             if dist < args.maxdist {
                 println!(" *");
@@ -380,18 +378,22 @@ fn main() -> anyhow::Result<()> {
             println!("All results have been filtered :-(");
             context_str = "Use any knowledge you have.".to_string();
         } else {
-            context_str += &("(document \"keywords\", with contents:".to_owned() + &keyword_context + ")");
+            if keyword_context.len() > 0 {
+                context_str += &keyword_context;
+            }
         }
         
         // Double, cache the results in the first iteration.
         let mut sep = "";
         for res in &result {
-            let hm = md_to_hashmap(&res.data).unwrap();
-            let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
-            let chunk_nr = md_to_str(hm.get("ccnt").unwrap()).unwrap();
-            let text = md_to_str(hm.get("text").unwrap()).unwrap();
+            let minerva_doc = MinervaDoc::try_from(res).expect("Cannot convert SearchResult to MinervaDoc.");
+            let filename = minerva_doc.title;
+            let chunk_nr = minerva_doc.chunk_num;
+            let text = minerva_doc.body;
             
-            context_str += &(sep.to_owned() + "\n(document:\"" + &filename + "/" + &chunk_nr + "\", with contents:" + &text + ")");
+            context_str += &(sep.to_owned()
+                + "\n(document:\"" + &filename + "/" + &chunk_nr.to_string()
+                + "\", with contents:" + &text + ")");
             sep = ", ";
         }
 
@@ -407,7 +409,11 @@ fn main() -> anyhow::Result<()> {
                 println!("Prompt longer than 12288, truncating.");
                 q = q[0..=12287].to_string();
             }
-            
+
+            if args.showprompt == true {
+                println!("\n{}\n", &q);
+            }
+
             //let q = format!("{question}", question=query);
             //let q = format!("Du är en vänlig och hjälpsam AI-assistent. Ditt svar ska vara kortfattat och använda sammanhanget om möjligt. Skriv ut namnet på det dokument som används från sammanhanget. Upprepa inte frågan eller referenserna. Svara på Svenska! Idag är {date}. Sammanhang: {context}. Fråga: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
             let ans = run_qmistral(&q);
@@ -416,7 +422,7 @@ fn main() -> anyhow::Result<()> {
             println!("\n{}", ans.unwrap().trim().to_string());
         } else {
             // We create a system message and a question.
-            let sys_message = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context}", context=context_str, date=chrono::Local::now().format("%A, %B %e, %Y"));
+            let sys_message = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question, context or references. Do not invent answers or references. Today is {date}. Context: {context}", context=context_str, date=chrono::Local::now().format("%A, %B %e, %Y"));
             
             let q = format!("Question: {question}", question=query);
 
