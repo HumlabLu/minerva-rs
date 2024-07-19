@@ -317,10 +317,10 @@ fn main() -> anyhow::Result<()> {
     }
 
     // This searches in the tantivy database.
-    let mut keyword_context = String::new();
     if let Some(keyword) = &args.keyword {
         println!("Keyword: \"{}\"", &keyword);
 
+        /*
         let x = search_documents(&keyword, args.nearest).unwrap(); // Uses query builder!
         //let x = fuzzy_search_documents(&keyword).unwrap();
         //let x = phrase_search_documents(&keyword, args.nearest).unwrap();
@@ -330,10 +330,6 @@ fn main() -> anyhow::Result<()> {
             //println!("{:?}", d.field_values()[1].value.as_text().unwrap());
             //keyword_context += d.field_values()[1].value.as_text().unwrap_or(""); //.as_str().unwrap();
             let minerva_doc: MinervaDoc = (&d).try_into().expect("Cannot convert TantivyDoc to MinervaDoc!");
-            keyword_context += &("(document:".to_owned()
-                + "\"" + &minerva_doc.title + "\", with contents:"
-                + &minerva_doc.body+")");
-            //keyword_context += &minerva_doc.body;
             println!("{:.4} | {} {} ...", s, i,
                 &minerva_doc.body
                 .replace('\n', " ")
@@ -343,14 +339,18 @@ fn main() -> anyhow::Result<()> {
                 .collect::<String>()
             );
         }
+        */
     }
     
     // Search for the nearest neighbours.
     if let Some(query) = &args.query {
         println!("Asking \"{}\"", &query);
+
+        // Collect the vector and keyword results in minerva_docs.
+        let mut minerva_docs = vec![];
         
+        // Get the related texts from the vector database. Store the minerva_docs.
         let data = chunk_string(query, args.chunksize);
-        //println!("{:?}", data); // Only if verbose!
         let vectors = embeddings(data).expect("Cannot create embeddings.");
         let v = vectors.get(0).expect("uh");
         let embedded_query = Vector((&v).to_vec());
@@ -359,42 +359,66 @@ fn main() -> anyhow::Result<()> {
         //let result = collection.true_search(&embedded_query, args.nearest).unwrap();
 
         for res in &result {
-            let minerva_doc = MinervaDoc::try_from(res).expect("Cannot convert SearchResult to MinervaDoc.");
-            let filename = minerva_doc.title;
-            let chunk_nr = minerva_doc.chunk_num;
-            let dist = res.distance;
-            
-            print!("{dist:.4} | {filename}/{chunk_nr}");
-            if dist < args.maxdist {
-                println!(" *");
+            let mut minerva_doc = MinervaDoc::try_from(res).expect("Cannot convert SearchResult to MinervaDoc.");
+            minerva_doc.score = res.distance;
+            if minerva_doc.score >= args.maxdist {
+                println!("OASYSDB {:.4} | {}/{} | Filtered!",
+                    &minerva_doc.score,
+                    &minerva_doc.title,
+                    &minerva_doc.chunk_num
+                );
             } else {
-                println!(" | filtered");
+                minerva_docs.push(minerva_doc);
             }
         }
 
+        // Search in the tantivy database.
+        if let Some(keyword) = &args.keyword {
+            let x = search_documents(&keyword, args.nearest).unwrap(); // Uses query builder!
+            for (s, d, _snippet, _i) in x {
+                let mut minerva_doc: MinervaDoc = (&d).try_into().expect("Cannot convert TantivyDoc to MinervaDoc!");
+                minerva_doc.score = s;
+                if minerva_doc.score < 10.0 { // Arbitrary, need a parameter!
+                    println!("TANTIVY {:.4} | {}/{} | Filtered!",
+                        &minerva_doc.score,
+                        &minerva_doc.title,
+                        &minerva_doc.chunk_num
+                    );
+                } else {
+                    minerva_docs.push(minerva_doc);
+                }
+            }
+        }
+
+        // Print summary
+        if minerva_docs.len() > 0 {
+            println!("Relevant documents.");
+            for minerva_doc in &minerva_docs {
+                let filename = &minerva_doc.title;
+                let chunk_nr = &minerva_doc.chunk_num;
+                let score = &minerva_doc.score;
+                println!("-> {score:.4} | {filename}/{chunk_nr}");
+            }
+        }
+
+        // Context for the LLM.
         let mut context_str = String::new();
-        let result: Vec<SearchResult> = result.into_iter().filter(|s| s.distance < args.maxdist).collect();
-        if result.len() == 0 && keyword_context.len() == 0 {
+
+        if minerva_docs.len() == 0 {
             println!("All results have been filtered :-(");
             context_str = "Use any knowledge you have.".to_string();
         } else {
-            if keyword_context.len() > 0 {
-                context_str += &keyword_context;
+            let mut sep = "";
+            for minerva_doc in &minerva_docs {
+                let filename = &minerva_doc.title;
+                let chunk_nr = &minerva_doc.chunk_num;
+                let text = &minerva_doc.body;
+                
+                context_str += &(sep.to_owned()
+                    + "\n(document:\"" + &filename + "/" + &chunk_nr.to_string()
+                    + "\", with contents:" + &text + ")");
+                sep = ", ";
             }
-        }
-        
-        // Double, cache the results in the first iteration.
-        let mut sep = "";
-        for res in &result {
-            let minerva_doc = MinervaDoc::try_from(res).expect("Cannot convert SearchResult to MinervaDoc.");
-            let filename = minerva_doc.title;
-            let chunk_nr = minerva_doc.chunk_num;
-            let text = minerva_doc.body;
-            
-            context_str += &(sep.to_owned()
-                + "\n(document:\"" + &filename + "/" + &chunk_nr.to_string()
-                + "\", with contents:" + &text + ")");
-            sep = ", ";
         }
 
         if args.showcontext == true {

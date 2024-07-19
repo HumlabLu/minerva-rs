@@ -15,6 +15,7 @@ pub struct MinervaDoc {
     pub chunk_num: u64,
     pub hash_body: String,
     pub ulid: String,
+    pub score: f32, // Both distance and tantivy score...
 }
 
 impl TryFrom<TantivyDocument> for MinervaDoc {
@@ -41,6 +42,7 @@ impl TryFrom<TantivyDocument> for MinervaDoc {
                 .and_then(|v| v.as_str()).ok_or("Missing hash_body")?
                 .to_string(),
             ulid: "?".to_string(),
+            score: 0.0,
         })
     }
 }
@@ -69,6 +71,7 @@ impl TryFrom<&TantivyDocument> for MinervaDoc {
                 .and_then(|v| v.as_str()).ok_or("Missing hash_body")?
                 .to_string(),
             ulid: "?".to_string(),
+            score: 0.0,
         })
     }
 }
@@ -154,6 +157,8 @@ impl TryFrom<&SearchResult> for MinervaDoc {
                 _ => return Err(ConversionError::InvalidType("ulid".to_string())),
             };
 
+            let score = 0.0;
+
             Ok(MinervaDoc {
                 title,
                 body,
@@ -161,6 +166,7 @@ impl TryFrom<&SearchResult> for MinervaDoc {
                 chunk_num,
                 hash_body,
                 ulid,
+                score,
             })
         } else {
             Err(ConversionError::InvalidType("data".to_string()))
