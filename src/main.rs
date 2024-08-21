@@ -289,6 +289,8 @@ fn main() -> anyhow::Result<()> {
             let list = collection.list().unwrap();
             for (id, item) in list.iter() {
                 //println!("{:5} | {:?}", id.0, item.data); // data = Metadata
+                // This can be merged with tantivity if all are converted to
+                // MinervaDocs like in hte search.
                 let hm = md_to_hashmap(&item.data).unwrap();
                 println!("{:5}/{:?}/{:?}/{:?}/{:?}",
                     id.0,
