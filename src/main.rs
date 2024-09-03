@@ -16,7 +16,6 @@ use tantivy::schema::OwnedValue;
 mod genaigen;
 use genaigen::genai_generate;
 mod ollamagen;
-use ollamagen::ollama_generate;
 
 // =====================================================================
 // Store multiple sizes, eg 256 nd 1024. Then search on the 256,

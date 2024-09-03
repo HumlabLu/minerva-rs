@@ -8,17 +8,17 @@ use tokio::io::{stdout, AsyncWriteExt};
 use tokio_stream::StreamExt;
 
 use ollama_rs::{
-    generation::chat::{request::ChatMessageRequest, ChatMessage},
+    generation::chat::{ChatMessage},
 };
 
 
 #[tokio::main]
-pub async fn ollama_generate(sys_msg: &str, question: &str, model: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let mut ollama = Ollama::default();
+pub async fn _ollama_generate(sys_msg: &str, question: &str, model: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let ollama = Ollama::default();
     let mut stdout = stdout();
-    let mut context: Option<GenerationContext> = None;
+    let context: Option<GenerationContext> = None;
 
-    let system_message = ChatMessage::assistant(sys_msg.to_string()); // ??
+    ChatMessage::assistant(sys_msg.to_string()); // ??
     //ollama.set_system_response("0".to_string(), sys_msg.to_string());
 
     /*
@@ -39,7 +39,8 @@ pub async fn ollama_generate(sys_msg: &str, question: &str, model: &str) -> Resu
             stdout.flush().await?;
             
             if ele.context.is_some() {
-                context = ele.context;
+                //context = ele.context;
+                _ = ele.context;
             }
         }
     }
