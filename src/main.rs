@@ -16,6 +16,7 @@ use tantivy::schema::OwnedValue;
 mod genaigen;
 use genaigen::genai_generate;
 mod ollamagen;
+use ollamagen::ollama_generate;
 
 // =====================================================================
 // Store multiple sizes, eg 256 nd 1024. Then search on the 256,
@@ -369,9 +370,9 @@ fn main() -> anyhow::Result<()> {
             if args.showprompt == true {
                 println!("\n{}\n", sys_message);
             }
-
+            
             let _ = genai_generate(&sys_message, &q, &args.ollama_model);
-
+            let _ = ollama_generate(&sys_message, &q, &args.ollama_model);
             /*
             let mut q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
             let sys_message = "";
