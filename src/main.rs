@@ -14,7 +14,6 @@ mod tant;
 use tant::{search_documents, insert_file, get_index_schema, get_num_documents};
 use tantivy::schema::OwnedValue;
 mod genaigen;
-use genaigen::genai_generate;
 mod ollamagen;
 use ollamagen::ollama_generate;
 
@@ -80,7 +79,7 @@ struct Args {
 
     #[arg(short = 'p', long, action, help = "Show the prompt.")]
     pub showprompt: bool,
-    
+
     #[arg(short = 'c', long, action, help = "Show the context.")]
     pub showcontext: bool,
 
@@ -129,7 +128,7 @@ fn main() -> anyhow::Result<()> {
 
     // test
     //genai_generate("Why is the sky blue?");
-    
+
     //_ = tanttest();
     let (i, _s) = get_index_schema().unwrap();
     let num_docs = get_num_documents(&i)?;
@@ -142,7 +141,7 @@ fn main() -> anyhow::Result<()> {
     }
     */
     // _ = load_model();
-    
+
     // This is the saved DB, containing different collections.
     let mut db = get_db();
     let mut collection = db.get_collection(&args.collection).unwrap_or_else(|_| {
@@ -176,7 +175,7 @@ fn main() -> anyhow::Result<()> {
 
             // Should check extension...
             let chunked_data = Some(embed_file_txt(filename, args.chunksize).expect("File does not exist?"));
-            
+
             if let Some(data) = chunked_data {
                 let vectors = embeddings(data.clone()).expect("Cannot create embeddings.");
                 let mut chunk_counter = 0usize;
@@ -194,7 +193,7 @@ fn main() -> anyhow::Result<()> {
         } else {
             println!("No items to add");
         }
-        
+
         // And make it persistent.
         db.save_collection(&args.collection, &collection).unwrap();
     }
@@ -209,7 +208,7 @@ fn main() -> anyhow::Result<()> {
             println!("added {}.", num);
         }
     }
-            
+
     if let Some(filename) = &args.filename {
         let path = Path::new(filename);
         let mut chunked_data: Option<Vec<String>> = None;
@@ -247,7 +246,7 @@ fn main() -> anyhow::Result<()> {
         }
     }
     println!("Size of vector database {}.", collection.len());
-    
+
     // Shouldn't really mix --parameters and commands...
     match args.command {
         Some(Commands::List { }) => {
@@ -295,11 +294,11 @@ fn main() -> anyhow::Result<()> {
         }
     }
     println!("{}", keyword_context);
-    
+
     // Search for the nearest neighbours.
     if let Some(query) = &args.query {
         println!("Asking \"{}\"", &query);
-        
+
         let data = chunk_string(query, args.chunksize);
         //println!("{:?}", data); // Only if verbose!
         let vectors = embeddings(data).expect("Cannot create embeddings.");
@@ -330,7 +329,7 @@ fn main() -> anyhow::Result<()> {
         } else {
             context_str += &("(document \"keywords\", with contents:".to_owned() + &keyword_context + ")");
         }
-        
+
         // Double, cache the results in the first iteration.
         let mut sep = "";
         for res in &result {
@@ -338,7 +337,7 @@ fn main() -> anyhow::Result<()> {
             let filename = md_to_str(hm.get("filename").unwrap()).unwrap();
             let chunk_nr = md_to_str(hm.get("ccnt").unwrap()).unwrap();
             let text = md_to_str(hm.get("text").unwrap()).unwrap();
-            
+
             if args.showcontext == true {
                 println!("  {}\n", text);
             }
@@ -354,7 +353,7 @@ fn main() -> anyhow::Result<()> {
                 println!("Prompt longer than 4096, truncating.");
                 q = q[0..=4095].to_string();
             }
-            
+
             //let q = format!("{question}", question=query);
             //let q = format!("Du är en vänlig och hjälpsam AI-assistent. Ditt svar ska vara kortfattat och använda sammanhanget om möjligt. Skriv ut namnet på det dokument som används från sammanhanget. Upprepa inte frågan eller referenserna. Svara på Svenska! Idag är {date}. Sammanhang: {context}. Fråga: {question}.", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
             let ans = run_qmistral(&q);
@@ -364,20 +363,15 @@ fn main() -> anyhow::Result<()> {
         } else {
             // We create a system message and a qustion.
             let sys_message = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context}", context=context_str, date=chrono::Local::now().format("%A, %B %e, %Y"));
-            
+
             let q = format!("Question: {question}", question=query);
 
             if args.showprompt == true {
                 println!("\n{}\n", sys_message);
             }
-            
-            let _ = genai_generate(&sys_message, &q, &args.ollama_model);
+
+            //let _ = genai_generate(&sys_message, &q, &args.ollama_model);
             let _ = ollama_generate(&sys_message, &q, &args.ollama_model);
-            /*
-            let mut q = format!("You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not make up facts. Print the name of document used from the context. Do not repeat the question or references. Do not invent answers or references. Today is {date}. Context: {context} \nQuestion: {question}", context=context_str, question=query, date=chrono::Local::now().format("%A, %B %e, %Y"));
-            let sys_message = "";
-            let _ = ollama_generate(&sys_message, &q, &args.ollama_model);
-            */
         }
     }
 
