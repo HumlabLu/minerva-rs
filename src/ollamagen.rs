@@ -33,14 +33,16 @@ pub async fn ollama_generate(sys_msg: &str, question: &str, model: &str) -> Resu
     let options = GenerationOptions::default()
         .num_ctx(42000)
         .temperature(0.9)
-        //.repeat_penalty(1.5)
+        .repeat_penalty(1.5)
         .repeat_last_n(-1)
         .top_k(100)
         .top_p(0.9);
 
+    // This is needed to get a correct response from the context?
     let prompt = format!("System: {}\nUser: {}", sys_msg, question);
 
-    // Only way to get the context for the sys_msg in ollama? Different from then// Python interface?
+    // Only way to get the context for the sys_msg in ollama? Different from
+    // Python interface?
     //let mut request = GenerationRequest::new(model.into(), question.to_string()).options(options);
     let mut request = GenerationRequest::new(model.into(), prompt.to_string()).options(options);
     

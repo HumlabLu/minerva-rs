@@ -323,10 +323,11 @@ fn main() -> anyhow::Result<()> {
 
         let mut context_str = String::new();
         let result: Vec<SearchResult> = result.into_iter().filter(|s| s.distance < args.maxdist).collect();
+        // FIXME logic in the next if/then is suspect.
         if result.len() == 0 && keyword_context.len() == 0 {
             println!("All results have been filtered :-(");
             context_str = "Use any knowledge you have.".to_string();
-        } else {
+        } else if keyword_context.len() > 0 {
             context_str += &("(document \"keywords\", with contents:".to_owned() + &keyword_context + ")");
         }
 
