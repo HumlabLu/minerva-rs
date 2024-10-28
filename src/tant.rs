@@ -396,7 +396,7 @@ pub fn get_all() -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>
     let searcher = reader.searcher();
     let query = AllQuery;
 
-    let num_docs = get_num_documents(&index)?;
+    let num_docs = 10; // get_num_documents(&index)?; // Should probably be limited...
     let top_docs = searcher.search(&query, &TopDocs::with_limit(num_docs.try_into().unwrap()))?;
 
     let snippet_generator = SnippetGenerator::create(&searcher, &query, body)?;
@@ -405,6 +405,7 @@ pub fn get_all() -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>
     for (score, doc_address) in top_docs {
         let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
         //println!("doc: {:?}", retrieved_doc);
+        //println!("{}", retrieved_doc.to_json(&schema));
         let snippet = snippet_generator.snippet_from_doc(&retrieved_doc); // always ""?
         //println!("snippet: {:?}", snippet.to_html());
         //println!("custom highlighting: {}", highlight(&snippet));
@@ -412,6 +413,20 @@ pub fn get_all() -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>
     }
     
     Ok(documents)
+}
+
+pub fn del_all() -> tantivy::Result<()> {
+    let index_path = Path::new("db/tantivy");
+    
+    let schema = &*SCHEMA;  // Ensure SCHEMA is defined and available in scope
+    let directory = MmapDirectory::open(index_path)?;
+    let index = Index::open_or_create(directory, schema.clone())?;
+
+    let mut index_writer: IndexWriter = index.writer(50_000_000)?;
+    let _clear = index_writer.delete_all_documents();
+    index_writer.commit()?;
+    
+    Ok(())
 }
 
 #[allow(dead_code)]

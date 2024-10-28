@@ -11,7 +11,8 @@ mod qmistral;
 use qmistral::run_qmistral;
 use std::collections::HashMap;
 mod tant;
-use tant::{search_documents, insert_file, get_index_schema, get_num_documents, get_all, text_from_owned_value, u64_from_owned_value};
+use tant::{search_documents, insert_file, get_index_schema,
+    get_num_documents, get_all, del_all, text_from_owned_value, u64_from_owned_value};
 use tantivy::schema::OwnedValue;
 mod genaigen;
 mod ollamagen;
@@ -99,7 +100,6 @@ pub enum Commands {
     #[command(arg_required_else_help = true)]
     Del {
         /// The database to delete.
-        #[arg(short, long, help = "Database to delete.")]
         database: Option<String>,
     },
 }
@@ -286,9 +286,14 @@ fn main() -> anyhow::Result<()> {
                 }
             } // "text"
         },
-        Some(Commands::Del { .. }) => {
-            let _ = db.delete_collection(&args.collection);
-            println!("Deleted collection \"{}\"", &args.collection);
+        Some(Commands::Del { database }) => {
+            if database == Some("vector".to_string()) { // match database.as_deref() == "vector" ?
+                let _ = db.delete_collection(&args.collection);
+                println!("Deleted collection \"{}\"", &args.collection);
+            }
+            if database == Some("text".to_string()) {
+                let _ = del_all().unwrap();
+            }
         },
         None => {}
     }
