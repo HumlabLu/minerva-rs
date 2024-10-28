@@ -11,14 +11,14 @@ mod qmistral;
 use qmistral::run_qmistral;
 use std::collections::HashMap;
 mod tant;
-use tant::{search_documents, insert_file, get_index_schema, get_num_documents};
+use tant::{search_documents, insert_file, get_index_schema, get_num_documents, get_all, text_from_owned_value, u64_from_owned_value};
 use tantivy::schema::OwnedValue;
 mod genaigen;
 mod ollamagen;
 use ollamagen::ollama_generate;
 
 // =====================================================================
-// Store multiple sizes, eg 256 nd 1024. Then search on the 256,
+// Store multiple sizes, eg 256 and 1024. Then search on the 256,
 // but return the longer 1024, so we get "more context", but also
 // more specific searching. (A poor man's version of returning the
 // chunks that come before and after the found chunk. (Or store
@@ -89,12 +89,18 @@ struct Args {
 
 #[derive(Debug, Subcommand, Clone)]
 pub enum Commands {
-    /// List collection.
+    /// List vector DB collection.
     List {
+        /// The database to list.
+        database: Option<String>,
     },
 
     /// Deletes the vector database.
+    #[command(arg_required_else_help = true)]
     Del {
+        /// The database to delete.
+        #[arg(short, long, help = "Database to delete.")]
+        database: Option<String>,
     },
 }
 
@@ -249,24 +255,38 @@ fn main() -> anyhow::Result<()> {
 
     // Shouldn't really mix --parameters and commands...
     match args.command {
-        Some(Commands::List { }) => {
-            let list = collection.list().unwrap();
-            for (id, item) in list.iter() {
-                //println!("{:5} | {:?}", id.0, item.data); // data = Metadata
-                let hm = md_to_hashmap(&item.data).unwrap();
-                println!("{:5}/{:?}/{:?}/{:?}/{:?}",
-                    id.0,
-                    md_to_str(hm.get("ulid").unwrap()).unwrap(),
-                    md_to_str(hm.get("date").unwrap()).unwrap(),
-                    md_to_str(hm.get("filename").unwrap()).unwrap(),
-                    md_to_str(hm.get("ccnt").unwrap()).unwrap()
-                );
-                println!("{:?}\n", md_to_str(
-                    hm.get("text").unwrap()
-                ).unwrap());
-            }
+        Some(Commands::List { database }) => {
+            if database == Some("vector".to_string()) { // match database.as_deref() == "vector" ?
+                let list = collection.list().unwrap();
+                for (id, item) in list.iter() {
+                    //println!("{:5} | {:?}", id.0, item.data); // data = Metadata
+                    let hm = md_to_hashmap(&item.data).unwrap();
+                    println!("{:5}/{:?}/{:?}/{:?}/{:?}",
+                        id.0,
+                        md_to_str(hm.get("ulid").unwrap()).unwrap(),
+                        md_to_str(hm.get("date").unwrap()).unwrap(),
+                        md_to_str(hm.get("filename").unwrap()).unwrap(),
+                        md_to_str(hm.get("ccnt").unwrap()).unwrap()
+                    );
+                    println!("{:?}\n", md_to_str(
+                        hm.get("text").unwrap()
+                    ).unwrap());
+                }
+            } // "vector"
+            if database == Some("text".to_string()) {
+                let x = get_all().unwrap();
+                for (_s, d, _snippet) in x {
+                    //println!("{}", snippet.expect("Empty snippet!").fragment());
+                    println!("{:?}/{:?}/{:?}",
+                        text_from_owned_value(&d.field_values()[0].value), // title/filename
+                        u64_from_owned_value(&d.field_values()[2].value), // page 
+                        u64_from_owned_value(&d.field_values()[2].value) // chunk
+                    );
+                    println!("{:?}\n", text_from_owned_value(&d.field_values()[1].value)); // contents
+                }
+            } // "text"
         },
-        Some(Commands::Del { }) => {
+        Some(Commands::Del { .. }) => {
             let _ = db.delete_collection(&args.collection);
             println!("Deleted collection \"{}\"", &args.collection);
         },

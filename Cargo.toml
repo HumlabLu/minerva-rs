@@ -12,6 +12,9 @@ categories  = [ "RAG" ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[profile.dev]
+opt-level = 3
+
 [dependencies]
 anyhow = "1.0.82"
 blake3 = "1.5.1"
@@ -37,11 +40,13 @@ tokio-stream = "0.1.15"
 tqdm = "0.7.0"
 ulid = "1.1.2"
 
+# OSX, without cuda.
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 candle-core = { git = "https://github.com/huggingface/candle", branch = "main" }
 candle-transformers = { git = "https://github.com/huggingface/candle", branch = "main" }
 candle-nn = { git = "https://github.com/huggingface/candle", branch = "main" }
 
+# Linux, add cuda.
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 candle-core = { git = "https://github.com/huggingface/candle", branch = "main", features = ["cuda"]}
 candle-transformers = { git = "https://github.com/huggingface/candle", branch = "main", features = ["cuda"]}

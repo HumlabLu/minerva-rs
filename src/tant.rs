@@ -1,5 +1,5 @@
 use tantivy::collector::{TopDocs, Count};
-use tantivy::query::{QueryParser, TermQuery, FuzzyTermQuery};
+use tantivy::query::{QueryParser, TermQuery, FuzzyTermQuery, AllQuery};
 use tantivy::schema::*;
 use tantivy::{doc, Index, IndexWriter, ReloadPolicy};
 use tantivy::directory::MmapDirectory;
@@ -18,6 +18,26 @@ static SCHEMA: Lazy<Schema> = Lazy::new(|| {
     schema_builder.add_text_field("hash_body", STRING | STORED);
     schema_builder.build()
 });
+
+pub fn text_from_owned_value(value: &OwnedValue) -> &str {
+    match value {
+        OwnedValue::Str(s) => s,
+        _ => {
+            eprintln!("Warning: Expected text field, found different type");
+            ""
+        }
+    }
+}
+
+pub fn u64_from_owned_value(value: &OwnedValue) -> &u64 {
+    match value {
+        OwnedValue::U64(s) => s,
+        _ => {
+            eprintln!("Warning: Expected u64 field, found different type");
+            &0 // Should prolly panic!
+        }
+    }
+}
 
 // Insert the four main fields, and calculate the body_hash
 // from the body text.
@@ -355,6 +375,37 @@ pub fn search_documents(query_str: &str) -> tantivy::Result<Vec<(f32, TantivyDoc
         let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
         //println!("doc: {:?}", retrieved_doc);
         let snippet = snippet_generator.snippet_from_doc(&retrieved_doc);
+        //println!("snippet: {:?}", snippet.to_html());
+        //println!("custom highlighting: {}", highlight(&snippet));
+        documents.push((score, retrieved_doc, Some(snippet)));
+    }
+    
+    Ok(documents)
+}
+
+pub fn get_all() -> tantivy::Result<Vec<(f32, TantivyDocument, Option<Snippet>)>> {
+    let index_path = Path::new("db/tantivy");
+    
+    let schema = &*SCHEMA;  // Ensure SCHEMA is defined and available in scope
+    let directory = MmapDirectory::open(index_path)?;
+    let index = Index::open_or_create(directory, schema.clone())?;
+    
+    let body = schema.get_field("body").unwrap();
+    
+    let reader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
+    let searcher = reader.searcher();
+    let query = AllQuery;
+
+    let num_docs = get_num_documents(&index)?;
+    let top_docs = searcher.search(&query, &TopDocs::with_limit(num_docs.try_into().unwrap()))?;
+
+    let snippet_generator = SnippetGenerator::create(&searcher, &query, body)?;
+    
+    let mut documents = Vec::new();
+    for (score, doc_address) in top_docs {
+        let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
+        //println!("doc: {:?}", retrieved_doc);
+        let snippet = snippet_generator.snippet_from_doc(&retrieved_doc); // always ""?
         //println!("snippet: {:?}", snippet.to_html());
         //println!("custom highlighting: {}", highlight(&snippet));
         documents.push((score, retrieved_doc, Some(snippet)));
