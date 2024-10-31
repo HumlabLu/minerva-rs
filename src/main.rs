@@ -39,6 +39,9 @@ struct Args {
     #[arg(short, long, help = "The file to add to the vector database.")]
     pub filename: Option<String>, // Path thingy?
 
+    #[arg(long, short = 'F', help = "The file to add to the text database.")]
+    pub text_filename: Option<String>,
+
     // Chunk size
     #[clap(long, action, default_value_t = 1024, help = "Chunk size (characters) for vectors.")]
     pub chunksize: usize,
@@ -215,7 +218,7 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    if let Some(filename) = &args.filename {
+    if let Some(filename) = &args.filename { // Add to both oasys and tantivy?
         let path = Path::new(filename);
         let mut chunked_data: Option<Vec<String>> = None;
         if path.is_file() {
@@ -244,6 +247,7 @@ fn main() -> anyhow::Result<()> {
             }
 
             // Add it to the current collection.
+            // Should check if the vector is already in the DB... should be a function for it.
             let ids = collection.insert_many(&records).unwrap();
             println!("Added {:?} items", ids.len());
 
@@ -252,6 +256,13 @@ fn main() -> anyhow::Result<()> {
         }
     }
     println!("Size of vector database {}.", collection.len());
+
+    if let Some(text_filename) = &args.text_filename {
+        let path = Path::new(text_filename);
+        let (index, _schema) = get_index_schema().unwrap();
+        let num = insert_file(&index, &text_filename).unwrap();
+        println!("Added {} items.", num);
+    }
 
     // Shouldn't really mix --parameters and commands...
     match args.command {
