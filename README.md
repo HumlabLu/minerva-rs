@@ -17,6 +17,7 @@ The system runs locally, no data is uploaded or stored online.
  - Depending on the model, might need a HF token!
  - Code needs cleaning/improving.
  - Tantivy DB integration needs work (is slow).
+ - The `db/tantivy` directory must be created by hand before using the system.
 
 ## Ubuntu
 
