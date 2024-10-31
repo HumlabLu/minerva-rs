@@ -4,15 +4,13 @@
 
 Simple RAG system written in Rust. It uses `fastembed-rs` to create
 embeddings for the vector database. The vector database is implemented
-using `oasysdb`. Texts are split into chunks using `text-splitter`. The
+using `oasysdb`. There is a second database, implemented using `tantivy`, which can store
+plain text documents which can be retrieved with a keyword
+search. Texts are split into chunks using `text-splitter`. The
 Candle library is used to run the models (which can be downloaded from
 huggingface). Alternatively, Ollama can be used to generate answers.
 
 The system runs locally, no data is uploaded or stored online.
-
-There is a second database, implemented using `tantivy`, which can store
-plain text documents which can be retrieved with a keyword
-search. This is still work in progress.
 
 ## Notes
 
@@ -27,10 +25,13 @@ To compile on Ubuntu, we need to set the path to CUDA libs and nvcc (this works 
 export PATH=$PATH:/usr/lib/gcc/x86_64-linux-gnu/11/
 export PATH=$PATH:/usr/local/cuda-12.2/bin/
 ```
- 
+On Arch Linux this is not necessary. Other ditributions have not been tested.
+
 ## Ask a question.
 
 ### Example 1
+
+We add some information to the vector database, and ask the system a question.
 
 ```shell
 % cat texts/facts.txt
@@ -40,8 +41,6 @@ We have a cat called Sirius. We have another cat called Maja. We refers to Peter
 
 % cargo run --release -- -q "How many cats does Peter have?"
 pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "How many cats does Peter have?" -m 0.75
-    Finished `release` profile [optimized] target(s) in 0.15s
-     Running `target/release/minerva-rs -q 'How many cats does Peter have?' -m 0.75`
 Args { filename: None, chunksize: 1024, collection: "vectors", dirname: None, tantdirname: None, maxdist: 0.75, nearest: 3, query: Some("How many cats does Peter have?"), keyword: None, verbose: false, showprompt: false, showcontext: false, command: None }
 Embedding dim 384
 Number of documents in the index: 0
@@ -66,10 +65,10 @@ have a cat called Sirius (document: "texts/facts.txt/0") and another cat named M
 
 ### Example 2 -- Larger Chunks
 
+Add the same information, but use a larger chunk-size for the embeddings.
+
 ```shell
 pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -f texts/facts.txt
-    Finished `release` profile [optimized] target(s) in 0.16s
-     Running `target/release/minerva-rs -f texts/facts.txt`
 Args { filename: Some("texts/facts.txt"), chunksize: 1024, collection: "vectors", dirname: None, tantdirname: None, maxdist: 0.65, nearest: 3, query: None, keyword: None, verbose: false, showprompt: false, showcontext: false, command: None }
 Embedding dim 384
 Number of documents in the index: 0
@@ -81,8 +80,6 @@ Added 1 items
 Size of collection 1.
 
 pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "Where is Peter's cat?"
-    Finished `release` profile [optimized] target(s) in 0.15s
-     Running `target/release/minerva-rs -q 'Where is Peter'\''s cat?'`
 Args { filename: None, chunksize: 1024, collection: "vectors", dirname: None, tantdirname: None, maxdist: 0.65, nearest: 3, query: Some("Where is Peter's cat?"), keyword: None, verbose: false, showprompt: false, showcontext: false, command: None }
 Embedding dim 384
 Number of documents in the index: 0
@@ -132,6 +129,8 @@ cargo run --release -- -q "Peter's cats are called Sirius and Nisse."
 
 ### Example 3
 
+Another example, showing the prompt+context used by the system.
+
 ```shell
 pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "Where is Sirius?"
 Args { filename: None, chunksize: 512, collection: "vectors", knearest: 2, query: Some("Where is Sirius?"), verbose: false, command: None }
@@ -154,6 +153,7 @@ Sirius is at Rörums Holma in Skåne, Sweden.
 ```
 
 Without the context.
+
 ```shell
 pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "Where is Sirius?" -n0
 [INST] You are a friendly and helpful AI assistant. Your answer should be to the point and use the context if possible. Do not repeat the question or references. Today is Thursday, May  9, 2024. Context: Use any knowledge you have.. Question: Where is Sirius?. [/INST]
@@ -245,12 +245,14 @@ and influences weather patterns by distributing heat and shaping global air curr
 
 ### Ollama
 
-By specifying the `-o` parameter, Ollama (mistral) will be used to generate answers. This expects Ollama to be installed and the mistral model to have been downloaded.
+By specifying the `-o` parameter, Ollama (mistral) will be used to generate answers. This expects Ollama to be installed and the mistral model (the default) to have been downloaded. Another model can be chosen with the `-M` parameter.
 
 ## List database contents.
 
+The contents of the vector database can be shown as follows.
+
 ```shell
-cargo run --release -- list
+cargo run --release -- list vector
 
 Embedding dim 384
 Number of documents in the tantivy database: 0
@@ -272,7 +274,29 @@ Size of vector database 5.
 "Water is a fundamental substance with unique properties that have profound ..."
 ```
 
+The text database can be shown like this.
+
+```shell
+cargo run --release -- list text
+```
+
+## Delete database contents
+
+The contents of the vector database can be deleted like this.
+```shell
+cargo run --release -- del vector
+```
+
+The contents of the tantivy text database can be deleted like this.
+```shell
+cargo run --release -- del text
+```
+
+There are no checks or warnings, using these commands will delete everything from the databases!
+
 ## Minerva
+
+Why the name Minerva?
 
 ```shell
 cargo run -q --release -- -q "Who was Minerva? Reference Roman mythology." -n0
