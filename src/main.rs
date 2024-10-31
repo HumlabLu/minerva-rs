@@ -213,7 +213,7 @@ fn main() -> anyhow::Result<()> {
         for filename in filenames {
             let filename_str = filename.clone().into_os_string().into_string().unwrap();
             print!("Reading {}...", filename_str); // Check extension here maybe...
-            let num = insert_file(&index, &filename).unwrap();
+            let num = insert_file(&index, &filename, args.chunksize).unwrap();
             println!("added {}.", num);
         }
     }
@@ -257,10 +257,10 @@ fn main() -> anyhow::Result<()> {
     }
     println!("Size of vector database {}.", collection.len());
 
+    // Separate text database insert.
     if let Some(text_filename) = &args.text_filename {
-        let path = Path::new(text_filename);
         let (index, _schema) = get_index_schema().unwrap();
-        let num = insert_file(&index, &text_filename).unwrap();
+        let num = insert_file(&index, &text_filename, args.chunksize).unwrap();
         println!("Added {} items.", num);
     }
 

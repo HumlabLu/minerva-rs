@@ -177,14 +177,14 @@ pub fn get_index_schema() -> tantivy::Result<(Index, Schema)> {
 
 // index should be a parameter, because we want to know where
 // we store it the document.
-pub fn insert_file<P: AsRef<Path>>(index: &Index, path: P) -> tantivy::Result<u64> {
+pub fn insert_file<P: AsRef<Path>>(index: &Index, path: P, chunk_size: usize) -> tantivy::Result<u64> {
     let path_ref = path.as_ref();
     let filename_str = path_ref.to_str().ok_or_else(|| {
         tantivy::TantivyError::InvalidArgument(format!("Invalid path: {:?}", path_ref))
     })?;
     let contents = fs::read_to_string(path_ref).expect("Cannot read file.");
 
-    let chunks = chunk_string(&contents, 2048); // Arbitrary value.
+    let chunks = chunk_string(&contents, chunk_size);
     let mut chunk_counter = 0u64;
     let mut index_writer: IndexWriter = index.writer(50_000_000)?;
     for chunk in chunks {
