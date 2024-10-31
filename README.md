@@ -181,6 +181,8 @@ Added 4 items
 Size of vector database 5.
 ```
 
+Use the `-F` option to add the text to the text database. The size of the chunks can be changed by spedifying the `--chunksize` parameter.
+
 ### Ask a question.
 
 ```shell
