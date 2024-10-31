@@ -39,7 +39,6 @@ We have a cat called Sirius. We have another cat called Maja. We refers to Peter
 
 % cargo run --release -- --chunksize 32 -f texts/facts.txt
 
-% cargo run --release -- -q "How many cats does Peter have?"
 pberck@Peters-MacBook-Pro-2 minerva-rs % cargo run --release -- -q "How many cats does Peter have?" -m 0.75
 Args { filename: None, chunksize: 1024, collection: "vectors", dirname: None, tantdirname: None, maxdist: 0.75, nearest: 3, query: Some("How many cats does Peter have?"), keyword: None, verbose: false, showprompt: false, showcontext: false, command: None }
 Embedding dim 384
@@ -245,7 +244,7 @@ and influences weather patterns by distributing heat and shaping global air curr
 
 ### Ollama
 
-By specifying the `-o` parameter, Ollama (mistral) will be used to generate answers. This expects Ollama to be installed and the mistral model (the default) to have been downloaded. Another model can be chosen with the `-M` parameter.
+By specifying the `-o` parameter, Ollama (mistral) will be used to generate answers. This expects Ollama to be installed and the mistral model (the default) to have been downloaded. Another model can be chosen with the `-O` parameter.
 
 ## List database contents.
 
