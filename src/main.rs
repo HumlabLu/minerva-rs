@@ -53,7 +53,7 @@ struct Args {
     #[arg(short, long, help = "Directory with text files to add to the vector database.")]
     pub dirname: Option<String>,
 
-    #[arg(short, long, help = "Directory with text files to add to the tantivy database.")]
+    #[arg(short = 'D', long, help = "Directory with text files to add to the tantivy database.")]
     pub tantdirname: Option<String>,
 
     #[arg(short, long, help = "Maximum distance between vectors.", default_value_t = 0.6500)]
