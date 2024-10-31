@@ -158,10 +158,17 @@ pub fn insert_doc(index: &Index, mut tdoc: TantivyDocument) -> tantivy::Result<(
     Ok(())
 }
 
+fn path_exists(path: &Path) -> bool {
+    fs::metadata(path).is_ok()
+}
+
 // We need to be able to define the DB path as well...
 // Or have it as an argument here!
 pub fn get_index_schema() -> tantivy::Result<(Index, Schema)> {
     let index_path = Path::new("db/tantivy");
+    if ! path_exists(index_path) {
+        fs::create_dir_all(index_path)?;
+    }
     let schema = &*SCHEMA;
     let directory = MmapDirectory::open(Path::new(index_path))?;
     let index = Index::open_or_create(directory, schema.clone())?;
