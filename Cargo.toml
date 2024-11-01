@@ -42,12 +42,12 @@ ulid = "1.1.2"
 
 # OSX, without cuda.
 [target.'cfg(target_arch = "aarch64")'.dependencies]
-candle-core = { git = "https://github.com/huggingface/candle", branch = "main" }
-candle-transformers = { git = "https://github.com/huggingface/candle", branch = "main" }
-candle-nn = { git = "https://github.com/huggingface/candle", branch = "main" }
+candle-core = { version = "0.7.2" }
+candle-nn = { version = "0.7.2" }
+candle-transformers = { version = "0.7.2" }
 
 # Linux, add cuda.
 [target.'cfg(target_arch = "x86_64")'.dependencies]
-candle-core = { git = "https://github.com/huggingface/candle", branch = "main", features = ["cuda"]}
-candle-transformers = { git = "https://github.com/huggingface/candle", branch = "main", features = ["cuda"]}
-candle-nn = { git = "https://github.com/huggingface/candle", branch = "main", features = ["cuda"]}
+candle-core = { version = "0.7.2", features = ["cuda"] }
+candle-nn = { version = "0.7.2", features = ["cuda"] }
+candle-transformers = { version = "0.7.2", features = ["cuda"] }
